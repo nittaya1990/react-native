@@ -46,7 +46,7 @@
     "react-test-renderer": "17.0.2",
     "shelljs": "^0.7.8",
     "signedsource": "^1.0.0",
-    "ws": "^6.1.4",
+    "ws": "^6.2.2",
     "yargs": "^15.3.1"
   }
 }
