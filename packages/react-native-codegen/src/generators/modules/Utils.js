@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -11,12 +11,15 @@
 'use strict';
 
 import type {
-  SchemaType,
   NativeModuleAliasMap,
   NativeModuleObjectTypeAnnotation,
   NativeModuleSchema,
+  NativeModuleTypeAnnotation,
+  Nullable,
+  SchemaType,
 } from '../../CodegenSchema';
 
+const {unwrapNullable} = require('../../parsers/parsers-commons');
 const invariant = require('invariant');
 
 export type AliasResolver = (
@@ -47,7 +50,36 @@ function getModules(
   );
 }
 
+function isDirectRecursiveMember(
+  parentObjectAliasName: ?string,
+  nullableTypeAnnotation: Nullable<NativeModuleTypeAnnotation>,
+): boolean {
+  const [typeAnnotation] = unwrapNullable<NativeModuleTypeAnnotation>(
+    nullableTypeAnnotation,
+  );
+  return (
+    parentObjectAliasName !== undefined &&
+    typeAnnotation.name === parentObjectAliasName
+  );
+}
+
+function isArrayRecursiveMember(
+  parentObjectAliasName: ?string,
+  nullableTypeAnnotation: Nullable<NativeModuleTypeAnnotation>,
+): boolean {
+  const [typeAnnotation] = unwrapNullable<NativeModuleTypeAnnotation>(
+    nullableTypeAnnotation,
+  );
+  return (
+    parentObjectAliasName !== undefined &&
+    typeAnnotation.type === 'ArrayTypeAnnotation' &&
+    typeAnnotation.elementType?.name === parentObjectAliasName
+  );
+}
+
 module.exports = {
   createAliasResolver,
   getModules,
+  isDirectRecursiveMember,
+  isArrayRecursiveMember,
 };

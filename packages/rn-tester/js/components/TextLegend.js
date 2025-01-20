@@ -1,16 +1,17 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
-import * as React from 'react';
-import {Text, View, StyleSheet} from 'react-native';
+import RNTesterText from '../components/RNTesterText';
 import RNTOption from './RNTOption';
+import * as React from 'react';
+import {StyleSheet, Text, View} from 'react-native';
 
 const PANGRAMS = {
   arabic:
@@ -40,14 +41,19 @@ const PANGRAMS = {
 export default function TextLegend(): React.Node {
   const [language, setLanguage] = React.useState('english');
   const [alignment, setAlignment] = React.useState('left');
+  // $FlowFixMe[missing-empty-array-annot]
   const [textMetrics, setTextMetrics] = React.useState([]);
   const [fontSize, setFontSize] = React.useState(50);
   return (
     <View>
-      <Text onPress={() => setFontSize(fontSize + 3)}>Increase size</Text>
-      <Text onPress={() => setFontSize(fontSize - 3)}>Decrease size</Text>
+      <RNTesterText onPress={() => setFontSize(fontSize + 3)}>
+        Increase size
+      </RNTesterText>
+      <RNTesterText onPress={() => setFontSize(fontSize - 3)}>
+        Decrease size
+      </RNTesterText>
       <View style={styles.block}>
-        <Text style={styles.title}>Language</Text>
+        <RNTesterText style={styles.title}>Language</RNTesterText>
         <View style={styles.row}>
           {Object.keys(PANGRAMS).map(lang => (
             <RNTOption
@@ -193,7 +199,7 @@ export default function TextLegend(): React.Node {
             ];
           },
         )}
-        <Text
+        <RNTesterText
           onTextLayout={event => {
             setTextMetrics(event.nativeEvent.lines);
           }}
@@ -202,10 +208,10 @@ export default function TextLegend(): React.Node {
             textAlign: alignment,
           }}>
           {PANGRAMS[language]}
-        </Text>
+        </RNTesterText>
       </View>
       <View style={styles.row}>
-        <Text>Alignment:</Text>
+        <RNTesterText>Alignment:</RNTesterText>
         <RNTOption
           label="Left Align"
           key="left_align"

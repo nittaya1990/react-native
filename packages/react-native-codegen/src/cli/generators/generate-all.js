@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -16,7 +16,6 @@
 
 const RNCodegen = require('../../generators/RNCodegen.js');
 const fs = require('fs');
-const mkdirp = require('mkdirp');
 
 const args = process.argv.slice(2);
 if (args.length < 3) {
@@ -39,7 +38,7 @@ if (schemaText == null) {
   throw new Error(`Can't find schema at ${schemaPath}`);
 }
 
-mkdirp.sync(outputDirectory);
+fs.mkdirSync(outputDirectory, {recursive: true});
 
 let schema;
 try {
@@ -55,6 +54,7 @@ RNCodegen.generate(
       'descriptors',
       'events',
       'props',
+      'states',
       'tests',
       'shadow-nodes',
       'modulesAndroid',

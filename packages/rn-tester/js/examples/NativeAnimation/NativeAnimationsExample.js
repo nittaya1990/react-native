@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,21 +10,21 @@
 
 'use strict';
 
-const React = require('react');
+import type AnimatedValue from 'react-native/Libraries/Animated/nodes/AnimatedValue';
 
-const {
-  View,
-  Text,
+import RNTesterSettingSwitchRow from '../../components/RNTesterSettingSwitchRow';
+import RNTesterText from '../../components/RNTesterText';
+import useJsStalls from '../../utils/useJsStalls';
+import React from 'react';
+import {
   Animated,
   StyleSheet,
   TouchableWithoutFeedback,
-  Slider,
-} = require('react-native');
-
-const AnimatedSlider = Animated.createAnimatedComponent(Slider);
+  View,
+} from 'react-native';
 
 class Tester extends React.Component<$FlowFixMeProps, $FlowFixMeState> {
-  state = {
+  state: any | {js: AnimatedValue, native: AnimatedValue} = {
     native: new Animated.Value(0),
     js: new Animated.Value(0),
   };
@@ -52,18 +52,18 @@ class Tester extends React.Component<$FlowFixMeProps, $FlowFixMeState> {
     }).start();
   };
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this.onPress}>
         <View>
           <View>
-            <Text>Native:</Text>
+            <RNTesterText>Native:</RNTesterText>
           </View>
           <View style={styles.row}>
             {this.props.children(this.state.native)}
           </View>
           <View>
-            <Text>JavaScript{':'}</Text>
+            <RNTesterText>JavaScript{':'}</RNTesterText>
           </View>
           <View style={styles.row}>{this.props.children(this.state.js)}</View>
         </View>
@@ -73,7 +73,7 @@ class Tester extends React.Component<$FlowFixMeProps, $FlowFixMeState> {
 }
 
 class ValueListenerExample extends React.Component<{...}, $FlowFixMeState> {
-  state = {
+  state: any | {anim: AnimatedValue, progress: number} = {
     anim: new Animated.Value(0),
     progress: 0,
   };
@@ -100,7 +100,7 @@ class ValueListenerExample extends React.Component<{...}, $FlowFixMeState> {
     }).start();
   };
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this._onPress}>
         <View>
@@ -114,7 +114,7 @@ class ValueListenerExample extends React.Component<{...}, $FlowFixMeState> {
               ]}
             />
           </View>
-          <Text>Value: {this.state.progress}</Text>
+          <RNTesterText>Value: {this.state.progress}</RNTesterText>
         </View>
       </TouchableWithoutFeedback>
     );
@@ -122,7 +122,7 @@ class ValueListenerExample extends React.Component<{...}, $FlowFixMeState> {
 }
 
 class LoopExample extends React.Component<{...}, $FlowFixMeState> {
-  state = {
+  state: any | {value: AnimatedValue} = {
     value: new Animated.Value(0),
   };
 
@@ -136,7 +136,7 @@ class LoopExample extends React.Component<{...}, $FlowFixMeState> {
     ).start();
   }
 
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.row}>
         <Animated.View
@@ -145,9 +145,6 @@ class LoopExample extends React.Component<{...}, $FlowFixMeState> {
             {
               opacity: this.state.value.interpolate({
                 inputRange: [0, 0.5, 1],
-                /* $FlowFixMe[speculation-ambiguous] (>=0.38.0) - Flow error
-                 * detected during the deployment of v0.38.0. To see the error,
-                 * remove this comment and run flow */
                 outputRange: [0, 1, 0],
               }),
             },
@@ -158,81 +155,49 @@ class LoopExample extends React.Component<{...}, $FlowFixMeState> {
   }
 }
 
-const RNTesterSettingSwitchRow = require('../../components/RNTesterSettingSwitchRow');
-class InternalSettings extends React.Component<
-  {...},
-  {
-    busyTime: number | string,
-    filteredStall: number,
-    ...
-  },
-> {
-  _stallInterval: ?number;
-  render() {
-    return (
-      <View>
-        <RNTesterSettingSwitchRow
-          initialValue={false}
-          label="Force JS Stalls"
-          onEnable={() => {
-            /* $FlowFixMe[incompatible-type] (>=0.63.0 site=react_native_fb)
-             * This comment suppresses an error found when Flow v0.63 was
-             * deployed. To see the error delete this comment and run Flow. */
-            this._stallInterval = setInterval(() => {
-              const start = Date.now();
-              console.warn('burn CPU');
-              while (Date.now() - start < 100) {}
-            }, 300);
-          }}
-          onDisable={() => {
-            /* $FlowFixMe[incompatible-call] (>=0.63.0 site=react_native_fb)
-             * This comment suppresses an error found when Flow v0.63 was
-             * deployed. To see the error delete this comment and run Flow. */
-            clearInterval(this._stallInterval || 0);
-          }}
-        />
-        <RNTesterSettingSwitchRow
-          initialValue={false}
-          label="Track JS Stalls"
-          onEnable={() => {
-            require('react-native/Libraries/Interaction/JSEventLoopWatchdog').install(
-              {
-                thresholdMS: 25,
-              },
-            );
-            this.setState({busyTime: '<none>'});
-            require('react-native/Libraries/Interaction/JSEventLoopWatchdog').addHandler(
-              {
-                onStall: ({busyTime}) =>
-                  this.setState(state => ({
-                    busyTime,
-                    filteredStall:
-                      (state.filteredStall || 0) * 0.97 + busyTime * 0.03,
-                  })),
-              },
-            );
-          }}
-          onDisable={() => {
-            console.warn('Cannot disable yet....');
-          }}
-        />
-        {this.state && (
-          <Text>
-            {`JS Stall filtered: ${Math.round(this.state.filteredStall)}, `}
-            {`last: ${this.state.busyTime}`}
-          </Text>
-        )}
-      </View>
-    );
-  }
-}
+const InternalSettings = () => {
+  const {
+    state,
+    onDisableForceJsStalls,
+    onEnableForceJsStalls,
+    onEnableJsStallsTracking,
+    onDisableJsStallsTracking,
+  } = useJsStalls();
+
+  const {stallIntervalId, filteredStall, busyTime, tracking} = state;
+
+  return (
+    <View>
+      <RNTesterSettingSwitchRow
+        active={stallIntervalId != null}
+        label="Force JS Stalls"
+        onEnable={onEnableForceJsStalls}
+        onDisable={onDisableForceJsStalls}
+      />
+
+      <RNTesterSettingSwitchRow
+        active={tracking}
+        label="Track JS Stalls"
+        onEnable={onEnableJsStallsTracking}
+        onDisable={onDisableJsStallsTracking}
+      />
+
+      {tracking && (
+        <RNTesterText>
+          {`JS Stall filtered: ${Math.round(filteredStall)}, `}
+          {`last: ${busyTime !== null ? busyTime.toFixed(8) : '<none>'}`}
+        </RNTesterText>
+      )}
+    </View>
+  );
+};
 
 class EventExample extends React.Component<{...}, $FlowFixMeState> {
-  state = {
+  state: any | {anim: AnimatedValue} = {
     anim: new Animated.Value(0),
   };
 
-  render() {
+  render(): React.Node {
     return (
       <View>
         <Animated.View
@@ -243,9 +208,6 @@ class EventExample extends React.Component<{...}, $FlowFixMeState> {
                 {
                   rotate: this.state.anim.interpolate({
                     inputRange: [0, 1],
-                    /* $FlowFixMe[speculation-ambiguous] (>=0.38.0) - Flow
-                     * error detected during the deployment of v0.38.0. To see
-                     * the error, remove this comment and run flow */
                     outputRange: ['0deg', '1deg'],
                   }),
                 },
@@ -267,16 +229,11 @@ class EventExample extends React.Component<{...}, $FlowFixMeState> {
               justifyContent: 'center',
               paddingLeft: 100,
             }}>
-            <Text>Scroll me sideways!</Text>
+            <RNTesterText style={{color: 'black'}}>
+              Scroll me sideways!
+            </RNTesterText>
           </View>
         </Animated.ScrollView>
-        <AnimatedSlider
-          maximumValue={200}
-          onValueChange={Animated.event(
-            [{nativeEvent: {value: this.state.anim}}],
-            {useNativeDriver: true},
-          )}
-        />
       </View>
     );
   }
@@ -286,7 +243,14 @@ class TrackingExample extends React.Component<
   $FlowFixMeProps,
   $FlowFixMeState,
 > {
-  state = {
+  state:
+    | any
+    | {
+        js: AnimatedValue,
+        native: AnimatedValue,
+        toJS: AnimatedValue,
+        toNative: AnimatedValue,
+      } = {
     native: new Animated.Value(0),
     toNative: new Animated.Value(0),
     js: new Animated.Value(0),
@@ -319,7 +283,10 @@ class TrackingExample extends React.Component<
     this.state.toJS.setValue(nextValue);
   };
 
-  renderBlock = (anim, dest) => [
+  renderBlock = (
+    anim: any | AnimatedValue,
+    dest: any | AnimatedValue,
+  ): Array<React.Node> => [
     <Animated.View
       key="line"
       style={[styles.line, {transform: [{translateX: dest}]}]}
@@ -330,18 +297,18 @@ class TrackingExample extends React.Component<
     />,
   ];
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this.onPress}>
         <View>
           <View>
-            <Text>Native:</Text>
+            <RNTesterText>Native:</RNTesterText>
           </View>
           <View style={styles.row}>
             {this.renderBlock(this.state.native, this.state.toNative)}
           </View>
           <View>
-            <Text>JavaScript{':'}</Text>
+            <RNTesterText>JavaScript{':'}</RNTesterText>
           </View>
           <View style={styles.row}>
             {this.renderBlock(this.state.js, this.state.toJS)}
@@ -656,16 +623,6 @@ exports.examples = [
               ]}
             />
           )}
-        </Tester>
-      );
-    },
-  },
-  {
-    title: 'Drive custom property (tap to animate)',
-    render: function (): React.Node {
-      return (
-        <Tester type="timing" config={{duration: 1000}}>
-          {anim => <AnimatedSlider style={{}} value={anim} />}
         </Tester>
       );
     },

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,8 +8,9 @@
  * @format
  */
 
-import {View, Text, StyleSheet, Switch} from 'react-native';
+import {RNTesterThemeContext} from '../../../components/RNTesterTheme';
 import * as React from 'react';
+import {StyleSheet, Switch, Text, View} from 'react-native';
 
 type ViewStyleProp = $ElementType<React.ElementConfig<typeof View>, 'style'>;
 
@@ -27,9 +28,10 @@ export default function ToggleNativeDriver({
   onValueChange,
   style,
 }: Props): React.Node {
+  const theme = React.useContext(RNTesterThemeContext);
   return (
     <View style={StyleSheet.compose(styles.row, style)}>
-      <Text>Use Native Driver</Text>
+      <Text style={{color: theme.SecondaryLabelColor}}>Use Native Driver</Text>
       <Switch
         testID="toggle-use-native-driver"
         onValueChange={onValueChange}

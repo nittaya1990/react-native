@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,12 +8,13 @@
  * @format
  */
 
-import * as React from 'react';
-import RNTesterButton from '../../components/RNTesterButton';
-import {Text, StyleSheet, View, Animated} from 'react-native';
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
+
 import RNTConfigurationBlock from '../../components/RNTConfigurationBlock';
+import RNTesterButton from '../../components/RNTesterButton';
 import ToggleNativeDriver from './utils/ToggleNativeDriver';
+import * as React from 'react';
+import {Animated, StyleSheet, Text, View} from 'react-native';
 
 const styles = StyleSheet.create({
   content: {
@@ -62,22 +63,22 @@ function TransformBounceView({useNativeDriver}: {useNativeDriver: boolean}) {
               {
                 scale: anim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: ([1, 4]: $ReadOnlyArray<number>),
+                  outputRange: [1, 4],
                 }),
               },
               {
                 translateX: anim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: ([0, 500]: $ReadOnlyArray<number>),
+                  outputRange: [0, 500],
                 }),
               },
               {
                 rotate: anim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: ([
+                  outputRange: [
                     '0deg',
                     '360deg', // 'deg' or 'rad'
-                  ]: $ReadOnlyArray<string>),
+                  ],
                 }),
               },
             ],

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,33 +8,35 @@
  * @flow
  */
 
-import {AsyncStorage} from 'react-native';
+import type {
+  ComponentList,
+  ExamplesList,
+  RNTesterModuleInfo,
+  RNTesterNavigationState,
+  SectionData,
+} from '../types/RNTesterTypes';
 
 import RNTesterList from './RNTesterList';
-
-import type {
-  ExamplesList,
-  RNTesterState,
-  ComponentList,
-} from '../types/RNTesterTypes';
 
 export const Screens = {
   COMPONENTS: 'components',
   APIS: 'apis',
-  BOOKMARKS: 'bookmarks',
+  PLAYGROUNDS: 'playgrounds',
 };
 
-export const initialState: RNTesterState = {
+export const initialNavigationState: RNTesterNavigationState = {
   activeModuleKey: null,
   activeModuleTitle: null,
   activeModuleExampleKey: null,
-  screen: null,
-  bookmarks: null,
-  recentlyUsed: null,
+  screen: Screens.COMPONENTS,
+  recentlyUsed: {components: [], apis: []},
+  hadDeepLink: false,
 };
 
 const filterEmptySections = (examplesList: ExamplesList): any => {
-  const filteredSections = {};
+  const filteredSections: {
+    ['apis' | 'components']: Array<SectionData<RNTesterModuleInfo>>,
+  } = {};
   const sectionKeys = Object.keys(examplesList);
 
   sectionKeys.forEach(key => {
@@ -46,23 +48,28 @@ const filterEmptySections = (examplesList: ExamplesList): any => {
   return filteredSections;
 };
 
-export const getExamplesListWithBookmarksAndRecentlyUsed = ({
-  bookmarks,
+export const getExamplesListWithRecentlyUsed = ({
   recentlyUsed,
+  testList,
 }: {
-  bookmarks: ComponentList,
   recentlyUsed: ComponentList,
+  testList?: {
+    components?: Array<RNTesterModuleInfo>,
+    apis?: Array<RNTesterModuleInfo>,
+  },
 }): ExamplesList | null => {
   // Return early if state has not been initialized from storage
-  if (!bookmarks || !recentlyUsed) {
+  if (!recentlyUsed) {
     return null;
   }
 
-  const components = RNTesterList.Components.map(componentExample => ({
-    ...componentExample,
-    isBookmarked: bookmarks.components.includes(componentExample.key),
-    exampleType: Screens.COMPONENTS,
-  }));
+  const componentList = testList?.components ?? RNTesterList.Components;
+  const components = componentList.map(
+    (componentExample): RNTesterModuleInfo => ({
+      ...componentExample,
+      exampleType: Screens.COMPONENTS,
+    }),
+  );
 
   const recentlyUsedComponents = recentlyUsed.components
     .map(recentComponentKey =>
@@ -70,21 +77,17 @@ export const getExamplesListWithBookmarksAndRecentlyUsed = ({
     )
     .filter(Boolean);
 
-  const bookmarkedComponents = components.filter(
-    component => component.isBookmarked,
-  );
-
-  const apis = RNTesterList.APIs.map(apiExample => ({
+  const apisList = testList?.apis ?? RNTesterList.APIs;
+  const apis = apisList.map((apiExample): RNTesterModuleInfo => ({
     ...apiExample,
-    isBookmarked: bookmarks.apis.includes(apiExample.key),
     exampleType: Screens.APIS,
   }));
 
   const recentlyUsedAPIs = recentlyUsed.apis
-    .map(recentAPIKey => apis.find(apiEample => apiEample.key === recentAPIKey))
+    .map(recentAPIKey =>
+      apis.find(apiExample => apiExample.key === recentAPIKey),
+    )
     .filter(Boolean);
-
-  const bookmarkedAPIs = apis.filter(apiEample => apiEample.isBookmarked);
 
   const examplesList: ExamplesList = {
     [Screens.COMPONENTS]: [
@@ -95,7 +98,9 @@ export const getExamplesListWithBookmarksAndRecentlyUsed = ({
       },
       {
         key: 'COMPONENTS',
-        data: components,
+        data: components.sort((a, b) =>
+          a.module.title.localeCompare(b.module.title),
+        ),
         title: 'Components',
       },
     ],
@@ -107,42 +112,11 @@ export const getExamplesListWithBookmarksAndRecentlyUsed = ({
       },
       {
         key: 'APIS',
-        data: apis,
-        title: 'APIs',
-      },
-    ],
-    [Screens.BOOKMARKS]: [
-      {
-        key: 'COMPONENTS',
-        data: bookmarkedComponents,
-        title: 'Components',
-      },
-      {
-        key: 'APIS',
-        data: bookmarkedAPIs,
+        data: apis.sort((a, b) => a.module.title.localeCompare(b.module.title)),
         title: 'APIs',
       },
     ],
   };
 
   return filterEmptySections(examplesList);
-};
-
-export const getInitialStateFromAsyncStorage = async (
-  storageKey: string,
-): Promise<RNTesterState> => {
-  const initialStateString = await AsyncStorage.getItem(storageKey);
-
-  if (!initialStateString) {
-    return {
-      activeModuleKey: null,
-      activeModuleTitle: null,
-      activeModuleExampleKey: null,
-      screen: Screens.COMPONENTS,
-      bookmarks: {components: [], apis: []},
-      recentlyUsed: {components: [], apis: []},
-    };
-  } else {
-    return JSON.parse(initialStateString);
-  }
 };

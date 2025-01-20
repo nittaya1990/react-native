@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -11,28 +11,31 @@
 'use strict';
 
 import type {
-  Nullable,
-  NativeModuleObjectTypeAnnotation,
-  NativeModuleStringTypeAnnotation,
-  NativeModuleNumberTypeAnnotation,
-  NativeModuleInt32TypeAnnotation,
-  NativeModuleDoubleTypeAnnotation,
-  NativeModuleFloatTypeAnnotation,
-  NativeModuleBooleanTypeAnnotation,
-  NativeModuleGenericObjectTypeAnnotation,
-  ReservedTypeAnnotation,
-  NativeModuleTypeAliasTypeAnnotation,
+  BooleanTypeAnnotation,
+  DoubleTypeAnnotation,
+  FloatTypeAnnotation,
+  Int32TypeAnnotation,
   NativeModuleArrayTypeAnnotation,
   NativeModuleBaseTypeAnnotation,
+  NativeModuleEnumDeclaration,
+  NativeModuleGenericObjectTypeAnnotation,
+  NativeModuleNumberTypeAnnotation,
+  NativeModuleObjectTypeAnnotation,
+  NativeModuleTypeAliasTypeAnnotation,
+  Nullable,
+  NumberLiteralTypeAnnotation,
+  ReservedTypeAnnotation,
+  StringLiteralTypeAnnotation,
+  StringLiteralUnionTypeAnnotation,
+  StringTypeAnnotation,
 } from '../../../CodegenSchema';
-
 import type {AliasResolver} from '../Utils';
 
-const {capitalize} = require('../../Utils');
 const {
   unwrapNullable,
   wrapNullable,
-} = require('../../../parsers/flow/modules/utils');
+} = require('../../../parsers/parsers-commons');
+const {capitalize} = require('../../Utils');
 
 type StructContext = 'CONSTANTS' | 'REGULAR';
 
@@ -57,12 +60,16 @@ export type StructProperty = $ReadOnly<{
 }>;
 
 export type StructTypeAnnotation =
-  | NativeModuleStringTypeAnnotation
+  | StringTypeAnnotation
+  | StringLiteralTypeAnnotation
+  | StringLiteralUnionTypeAnnotation
   | NativeModuleNumberTypeAnnotation
-  | NativeModuleInt32TypeAnnotation
-  | NativeModuleDoubleTypeAnnotation
-  | NativeModuleFloatTypeAnnotation
-  | NativeModuleBooleanTypeAnnotation
+  | NumberLiteralTypeAnnotation
+  | Int32TypeAnnotation
+  | DoubleTypeAnnotation
+  | FloatTypeAnnotation
+  | BooleanTypeAnnotation
+  | NativeModuleEnumDeclaration
   | NativeModuleGenericObjectTypeAnnotation
   | ReservedTypeAnnotation
   | NativeModuleTypeAliasTypeAnnotation
@@ -92,9 +99,12 @@ class StructCollector {
         });
       }
       case 'ArrayTypeAnnotation': {
-        if (typeAnnotation.elementType == null) {
+        if (typeAnnotation.elementType.type === 'AnyTypeAnnotation') {
           return wrapNullable(nullable, {
             type: 'ArrayTypeAnnotation',
+            elementType: {
+              type: 'AnyTypeAnnotation',
+            },
           });
         }
 
@@ -112,6 +122,33 @@ class StructCollector {
         this._insertAlias(typeAnnotation.name, structContext, resolveAlias);
         return wrapNullable(nullable, typeAnnotation);
       }
+      case 'EnumDeclaration':
+        return wrapNullable(nullable, typeAnnotation);
+      case 'MixedTypeAnnotation':
+        throw new Error('Mixed types are unsupported in structs');
+      case 'UnionTypeAnnotation':
+        switch (typeAnnotation.memberType) {
+          case 'StringTypeAnnotation':
+            return wrapNullable(nullable, {
+              type: 'StringTypeAnnotation',
+            });
+          case 'NumberTypeAnnotation':
+            return wrapNullable(nullable, {
+              type: 'NumberTypeAnnotation',
+            });
+          case 'ObjectTypeAnnotation':
+            // This isn't smart enough to actually know how to generate the
+            // options on the native side. So we just treat it as an unknown object type
+            return wrapNullable(nullable, {
+              type: 'GenericObjectTypeAnnotation',
+            });
+          default:
+            (typeAnnotation.memberType: empty);
+            throw new Error(
+              'Union types are unsupported in structs' +
+                JSON.stringify(typeAnnotation),
+            );
+        }
       default: {
         return wrapNullable(nullable, typeAnnotation);
       }

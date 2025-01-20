@@ -1,22 +1,26 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
  * @format
+ * @flow strict-local
  */
 
-import React, {useState} from 'react';
-import {Alert, StyleSheet, Text, TouchableHighlight, View} from 'react-native';
+import type {RNTesterModule} from '../../types/RNTesterTypes';
+
+import RNTesterText from '../../components/RNTesterText';
+import * as React from 'react';
+import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 
 // Shows log on the screen
-const Log = ({message}) =>
+const Log = ({message}: {message: string}) =>
   message ? (
     <View style={styles.logContainer}>
-      <Text>
-        <Text style={styles.bold}>Log</Text>: {message}
-      </Text>
+      <RNTesterText>
+        <RNTesterText style={styles.bold}>Log</RNTesterText>: {message}
+      </RNTesterText>
     </View>
   ) : null;
 
@@ -29,26 +33,26 @@ const AlertWithDefaultButton = () => {
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         testID="alert-with-default-button"
         style={styles.wrapper}
         onPress={() => Alert.alert('Alert', alertMessage)}>
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
     </View>
   );
 };
 
 const AlertWithTwoButtons = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const alertMessage = 'Your subscription has expired!';
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         style={styles.wrapper}
         onPress={() =>
           Alert.alert('Action Required!', alertMessage, [
@@ -59,20 +63,20 @@ const AlertWithTwoButtons = () => {
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
       <Log message={message} />
     </View>
   );
 };
 
 const AlertWithThreeButtons = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const alertMessage = 'Do you want to save your changes?';
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         testID="alert-with-three-buttons"
         style={styles.wrapper}
         onPress={() =>
@@ -85,14 +89,14 @@ const AlertWithThreeButtons = () => {
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
       <Log message={message} />
     </View>
   );
 };
 
 const AlertWithManyButtons = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const alertMessage =
     'Credibly reintermediate next-generation potentialities after goal-oriented ' +
@@ -100,7 +104,7 @@ const AlertWithManyButtons = () => {
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         style={styles.wrapper}
         onPress={() =>
           Alert.alert(
@@ -115,20 +119,20 @@ const AlertWithManyButtons = () => {
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
       <Log message={message} />
     </View>
   );
 };
 
 const AlertWithCancelableTrue = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const alertMessage = 'Tapping outside this dialog will dismiss this alert.';
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         style={styles.wrapper}
         onPress={() =>
           Alert.alert(
@@ -147,20 +151,20 @@ const AlertWithCancelableTrue = () => {
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
       <Log message={message} />
     </View>
   );
 };
 
 const AlertWithStyles = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const alertMessage = 'Look at the button styles!';
 
   return (
     <View>
-      <TouchableHighlight
+      <Pressable
         style={styles.wrapper}
         onPress={() =>
           Alert.alert('Styled Buttons!', alertMessage, [
@@ -184,8 +188,164 @@ const AlertWithStyles = () => {
         <View style={styles.button}>
           <Text>Tap to view alert</Text>
         </View>
-      </TouchableHighlight>
+      </Pressable>
       <Log message={message} />
+    </View>
+  );
+};
+
+const AlertWithStylesPreferred = () => {
+  const [message, setMessage] = React.useState('');
+
+  const alertMessage =
+    "The Preferred button is styled with 'preferred', so it is emphasized over the cancel button.";
+
+  return (
+    <View>
+      <Pressable
+        style={styles.wrapper}
+        onPress={() =>
+          Alert.alert('Foo Title', alertMessage, [
+            {
+              text: 'Preferred',
+              isPreferred: true,
+              onPress: () => setMessage('Preferred Pressed!'),
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => setMessage('Cancel Pressed!'),
+            },
+          ])
+        }>
+        <View style={styles.button}>
+          <Text>Tap to view alert</Text>
+        </View>
+      </Pressable>
+      <Log message={message} />
+    </View>
+  );
+};
+
+const PromptOptions = () => {
+  const [promptValue, setPromptValue] = React.useState<
+    string | {login: string, password: string},
+  >('');
+
+  const customButtons = [
+    {
+      text: 'Custom OK',
+      onPress: setPromptValue,
+    },
+    {
+      text: 'Custom Cancel',
+      style: 'cancel',
+    },
+  ];
+
+  return (
+    <View>
+      <RNTesterText style={styles.promptValue}>
+        <Text style={styles.bold}>Prompt value:</Text>
+        {JSON.stringify(promptValue, null, 2)}
+      </RNTesterText>
+
+      <Pressable
+        style={styles.wrapper}
+        onPress={() => Alert.prompt('Type a value', null, setPromptValue)}>
+        <View style={styles.button}>
+          <Text>prompt with title & callback</Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        style={styles.wrapper}
+        onPress={() => Alert.prompt('Type a value', null, customButtons)}>
+        <View style={styles.button}>
+          <Text>prompt with title & custom buttons</Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        style={styles.wrapper}
+        onPress={() =>
+          Alert.prompt(
+            'Type a phone number',
+            null,
+            null,
+            'plain-text',
+            undefined,
+            'phone-pad',
+          )
+        }>
+        <View style={styles.button}>
+          <Text>prompt with title & custom keyboard</Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        style={styles.wrapper}
+        onPress={() =>
+          Alert.prompt(
+            'Type a value',
+            null,
+            setPromptValue,
+            undefined,
+            'Default value',
+          )
+        }>
+        <View style={styles.button}>
+          <Text>prompt with title, callback & default value</Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        style={styles.wrapper}
+        onPress={() =>
+          Alert.prompt(
+            'Type a value',
+            null,
+            customButtons,
+            'login-password',
+            'admin@site.com',
+          )
+        }>
+        <View style={styles.button}>
+          <Text>
+            prompt with title, custom buttons, login/password & default value
+          </Text>
+        </View>
+      </Pressable>
+    </View>
+  );
+};
+
+const PromptTypes = () => {
+  return (
+    <View>
+      <Pressable
+        style={styles.wrapper}
+        onPress={() => Alert.prompt('Plain Text Entry')}>
+        <View style={styles.button}>
+          <Text>plain-text</Text>
+        </View>
+      </Pressable>
+      <Pressable
+        style={styles.wrapper}
+        onPress={() => Alert.prompt('Secure Text', null, null, 'secure-text')}>
+        <View style={styles.button}>
+          <Text>secure-text</Text>
+        </View>
+      </Pressable>
+      <Pressable
+        style={styles.wrapper}
+        onPress={() =>
+          Alert.prompt('Login & Password', null, null, 'login-password')
+        }>
+        <View style={styles.button}>
+          <Text>login-password</Text>
+        </View>
+      </Pressable>
     </View>
   );
 };
@@ -206,14 +366,12 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
   },
+  promptValue: {
+    marginBottom: 10,
+  },
 });
 
-exports.title = 'Alerts';
-exports.description =
-  'Alerts display a concise and informative message ' +
-  'and prompt the user to make a decision.';
-exports.documentationURL = 'https://reactnative.dev/docs/alert';
-exports.examples = [
+export const examples = [
   {
     title: 'Alert with default Button',
     description:
@@ -262,4 +420,37 @@ exports.examples = [
       return <AlertWithStyles />;
     },
   },
+  {
+    title: 'Alert with styles + preferred',
+    platform: 'ios',
+    description:
+      "Alert buttons with 'isPreferred' will be emphasized, even over cancel buttons",
+    render(): React.Node {
+      return <AlertWithStylesPreferred />;
+    },
+  },
+  {
+    title: 'Prompt Options',
+    platform: 'ios',
+    render(): React.Node {
+      return <PromptOptions />;
+    },
+  },
+  {
+    title: 'Prompt Types',
+    platform: 'ios',
+    render(): React.Node {
+      return <PromptTypes />;
+    },
+  },
 ];
+
+export default ({
+  framework: 'React',
+  title: 'Alerts',
+  category: 'UI',
+  documentationURL: 'https://reactnative.dev/docs/alert',
+  description:
+    'Alerts display a concise and informative message and prompt the user to make a decision.',
+  examples,
+}: RNTesterModule);

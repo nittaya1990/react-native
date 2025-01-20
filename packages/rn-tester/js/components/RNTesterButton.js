@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,30 +10,27 @@
 
 'use strict';
 
-const React = require('react');
-
-const {StyleSheet, Text, TouchableHighlight} = require('react-native');
-
 import type {PressEvent} from 'react-native/Libraries/Types/CoreEventTypes';
 
-type Props = $ReadOnly<{|
+import React from 'react';
+import {Pressable, StyleSheet, Text} from 'react-native';
+
+type Props = $ReadOnly<{
   testID?: string,
+  textTestID?: string,
   children?: React.Node,
   onPress?: ?(event: PressEvent) => mixed,
-|}>;
+}>;
 
-class RNTesterButton extends React.Component<Props> {
-  render(): React.Node {
-    return (
-      <TouchableHighlight
-        testID={this.props.testID}
-        onPress={this.props.onPress}
-        style={styles.button}
-        underlayColor="grey">
-        <Text>{this.props.children}</Text>
-      </TouchableHighlight>
-    );
-  }
+function RNTesterButton(props: Props): React.Node {
+  return (
+    <Pressable
+      testID={props.testID}
+      onPress={props.onPress}
+      style={({pressed}) => [styles.button, pressed && styles.pressed]}>
+      <Text testID={props.textTestID}>{props.children}</Text>
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -47,6 +44,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#d3d3d3',
   },
+  pressed: {
+    backgroundColor: '#a9a9a9',
+  },
 });
 
-module.exports = RNTesterButton;
+export default RNTesterButton;

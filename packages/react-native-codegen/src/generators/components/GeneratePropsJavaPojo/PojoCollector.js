@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -11,15 +11,17 @@
 'use strict';
 
 import type {
-  ReservedPropTypeAnnotation,
-  NamedShape,
-  ObjectTypeAnnotation,
   BooleanTypeAnnotation,
-  StringTypeAnnotation,
+  ComponentArrayTypeAnnotation,
   DoubleTypeAnnotation,
   FloatTypeAnnotation,
   Int32TypeAnnotation,
+  MixedTypeAnnotation,
+  NamedShape,
+  ObjectTypeAnnotation,
   PropTypeAnnotation,
+  ReservedPropTypeAnnotation,
+  StringTypeAnnotation,
 } from '../../../CodegenSchema';
 
 const {capitalize} = require('../../Utils');
@@ -89,7 +91,8 @@ export type PojoTypeAnnotation =
             type: 'ArrayTypeAnnotation',
             elementType: PojoTypeAliasAnnotation,
           }>,
-    }>;
+    }>
+  | MixedTypeAnnotation;
 
 class PojoCollector {
   _pojos: Map<string, Pojo> = new Map();
@@ -108,9 +111,8 @@ class PojoCollector {
       }
       case 'ArrayTypeAnnotation': {
         const arrayTypeAnnotation = typeAnnotation;
-        // TODO: Flow assumes elementType can be any. Fix this.
         const elementType: $PropertyType<
-          typeof arrayTypeAnnotation,
+          ComponentArrayTypeAnnotation,
           'elementType',
         > = arrayTypeAnnotation.elementType;
 

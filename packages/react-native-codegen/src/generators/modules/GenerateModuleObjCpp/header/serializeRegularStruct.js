@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,14 +10,17 @@
 
 'use strict';
 
-const {getSafePropertyName, getNamespacedStructName} = require('../Utils');
-const {capitalize} = require('../../../Utils');
-
 import type {Nullable} from '../../../../CodegenSchema';
-import type {StructTypeAnnotation, RegularStruct} from '../StructCollector';
+import type {RegularStruct, StructTypeAnnotation} from '../StructCollector';
 import type {StructSerilizationOutput} from './serializeStruct';
 
-const {unwrapNullable} = require('../../../../parsers/flow/modules/utils');
+const {unwrapNullable} = require('../../../../parsers/parsers-commons');
+const {wrapOptional: wrapCxxOptional} = require('../../../TypeUtils/Cxx');
+const {
+  wrapOptional: wrapObjCOptional,
+} = require('../../../TypeUtils/Objective-C');
+const {capitalize} = require('../../../Utils');
+const {getNamespacedStructName, getSafePropertyName} = require('../Utils');
 
 const StructTemplate = ({
   hasteModuleName,
@@ -70,42 +73,57 @@ function toObjCType(
 ): string {
   const [typeAnnotation, nullable] = unwrapNullable(nullableTypeAnnotation);
   const isRequired = !nullable && !isOptional;
-  const wrapFollyOptional = (type: string) => {
-    return isRequired ? type : `folly::Optional<${type}>`;
-  };
 
   switch (typeAnnotation.type) {
     case 'ReservedTypeAnnotation':
       switch (typeAnnotation.name) {
         case 'RootTag':
-          return wrapFollyOptional('double');
+          return wrapCxxOptional('double', isRequired);
         default:
           (typeAnnotation.name: empty);
           throw new Error(`Unknown prop type, found: ${typeAnnotation.name}"`);
       }
     case 'StringTypeAnnotation':
       return 'NSString *';
+    case 'StringLiteralTypeAnnotation':
+      return 'NSString *';
+    case 'StringLiteralUnionTypeAnnotation':
+      return 'NSString *';
     case 'NumberTypeAnnotation':
-      return wrapFollyOptional('double');
+      return wrapCxxOptional('double', isRequired);
+    case 'NumberLiteralTypeAnnotation':
+      return wrapCxxOptional('double', isRequired);
     case 'FloatTypeAnnotation':
-      return wrapFollyOptional('double');
+      return wrapCxxOptional('double', isRequired);
     case 'Int32TypeAnnotation':
-      return wrapFollyOptional('double');
+      return wrapCxxOptional('double', isRequired);
     case 'DoubleTypeAnnotation':
-      return wrapFollyOptional('double');
+      return wrapCxxOptional('double', isRequired);
     case 'BooleanTypeAnnotation':
-      return wrapFollyOptional('bool');
-    case 'GenericObjectTypeAnnotation':
-      return isRequired ? 'id<NSObject> ' : 'id<NSObject> _Nullable';
-    case 'ArrayTypeAnnotation':
-      if (typeAnnotation.elementType == null) {
-        return isRequired ? 'id<NSObject> ' : 'id<NSObject> _Nullable';
+      return wrapCxxOptional('bool', isRequired);
+    case 'EnumDeclaration':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return wrapCxxOptional('double', isRequired);
+        case 'StringTypeAnnotation':
+          return 'NSString *';
+        default:
+          throw new Error(
+            `Couldn't convert enum into ObjC type: ${typeAnnotation.type}"`,
+          );
       }
-      return wrapFollyOptional(
+    case 'GenericObjectTypeAnnotation':
+      return wrapObjCOptional('id<NSObject>', isRequired);
+    case 'ArrayTypeAnnotation':
+      if (typeAnnotation.elementType.type === 'AnyTypeAnnotation') {
+        return wrapObjCOptional('id<NSObject>', isRequired);
+      }
+      return wrapCxxOptional(
         `facebook::react::LazyVector<${toObjCType(
           hasteModuleName,
           typeAnnotation.elementType,
         )}>`,
+        isRequired,
       );
     case 'TypeAliasTypeAnnotation':
       const structName = capitalize(typeAnnotation.name);
@@ -113,7 +131,7 @@ function toObjCType(
         hasteModuleName,
         structName,
       );
-      return wrapFollyOptional(namespacedStructName);
+      return wrapCxxOptional(namespacedStructName, isRequired);
     default:
       (typeAnnotation.type: empty);
       throw new Error(
@@ -151,7 +169,13 @@ function toObjCValue(
       }
     case 'StringTypeAnnotation':
       return RCTBridgingTo('String');
+    case 'StringLiteralTypeAnnotation':
+      return RCTBridgingTo('String');
+    case 'StringLiteralUnionTypeAnnotation':
+      return RCTBridgingTo('String');
     case 'NumberTypeAnnotation':
+      return RCTBridgingTo('Double');
+    case 'NumberLiteralTypeAnnotation':
       return RCTBridgingTo('Double');
     case 'FloatTypeAnnotation':
       return RCTBridgingTo('Double');
@@ -161,11 +185,22 @@ function toObjCValue(
       return RCTBridgingTo('Double');
     case 'BooleanTypeAnnotation':
       return RCTBridgingTo('Bool');
+    case 'EnumDeclaration':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return RCTBridgingTo('Double');
+        case 'StringTypeAnnotation':
+          return RCTBridgingTo('String');
+        default:
+          throw new Error(
+            `Couldn't convert enum into ObjC value: ${typeAnnotation.type}"`,
+          );
+      }
     case 'GenericObjectTypeAnnotation':
       return value;
     case 'ArrayTypeAnnotation':
       const {elementType} = typeAnnotation;
-      if (elementType == null) {
+      if (elementType.type === 'AnyTypeAnnotation') {
         return value;
       }
 
@@ -190,7 +225,7 @@ function toObjCValue(
       );
 
       return !isRequired
-        ? `(${value} == nil ? folly::none : folly::make_optional(${namespacedStructName}(${value})))`
+        ? `(${value} == nil ? std::nullopt : std::make_optional(${namespacedStructName}(${value})))`
         : `${namespacedStructName}(${value})`;
     default:
       (typeAnnotation.type: empty);

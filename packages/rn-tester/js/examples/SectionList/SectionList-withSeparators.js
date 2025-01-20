@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -9,12 +9,12 @@
  */
 
 import SectionListBaseExample from './SectionListBaseExample';
-import {View, Text, StyleSheet} from 'react-native';
 import * as React from 'react';
+import {StyleSheet, Text, View} from 'react-native';
 
 const Separator =
-  (defaultColor, highlightColor, isSectionSeparator) =>
-  ({leadingItem, trailingItem, highlighted, hasBeenHighlighted}) => {
+  (defaultColor: string, highlightColor: string, isSectionSeparator: boolean) =>
+  ({leadingItem, trailingItem, highlighted, hasBeenHighlighted}: any) => {
     const text = `${
       isSectionSeparator ? 'Section ' : ''
     }separator for leading ${leadingItem} and trailing ${trailingItem} has ${
@@ -27,7 +27,7 @@ const Separator =
           styles.separator,
           {backgroundColor: highlighted ? highlightColor : defaultColor},
         ]}>
-        <Text style={styles.separtorText}>{text}</Text>
+        <Text style={styles.separatorText}>{text}</Text>
       </View>
     );
   };
@@ -37,7 +37,7 @@ export function SectionList_withSeparators(): React.Node {
     ItemSeparatorComponent: Separator('lightgreen', 'green', false),
     SectionSeparatorComponent: Separator('lightblue', 'blue', true),
   };
-  const ref = React.useRef(null);
+  const ref = React.useRef<any>(null);
 
   return <SectionListBaseExample ref={ref} exampleProps={exampleProps} />;
 }
@@ -46,15 +46,15 @@ const styles = StyleSheet.create({
   separator: {
     height: 12,
   },
-  separtorText: {
+  separatorText: {
     fontSize: 10,
   },
 });
 
 export default {
   title: 'SectionList With Separators',
-  name: 'SectionList-withSeparators',
-  render: function (): React.Element<typeof SectionList_withSeparators> {
+  name: 'withSeparators',
+  render: function (): React.MixedElement {
     return <SectionList_withSeparators />;
   },
 };

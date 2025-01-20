@@ -1,135 +1,35 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 'use strict';
 
-const React = require('react');
+import type {
+  RNTesterModule,
+  RNTesterModuleExample,
+} from '../../types/RNTesterTypes';
 
-const {
-  Text,
-  TextInput,
-  View,
-  StyleSheet,
-  Slider,
-  Switch,
-} = require('react-native');
+import ExampleTextInput from './ExampleTextInput';
+import TextInputSharedExamples from './TextInputSharedExamples';
+import React from 'react';
+import {StyleSheet, Text, View} from 'react-native';
 
-const TextInputSharedExamples = require('./TextInputSharedExamples.js');
+const ToggleDefaultPaddingExample = (): React.Node => {
+  const [hasPadding, setHasPadding] = React.useState(false);
 
-import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
-
-class ToggleDefaultPaddingExample extends React.Component<
-  $FlowFixMeProps,
-  $FlowFixMeState,
-> {
-  constructor(props) {
-    super(props);
-    this.state = {hasPadding: false};
-  }
-  render() {
-    return (
-      <View>
-        <TextInput style={this.state.hasPadding ? {padding: 0} : null} />
-        <Text
-          onPress={() => this.setState({hasPadding: !this.state.hasPadding})}>
-          Toggle padding
-        </Text>
-      </View>
-    );
-  }
-}
-
-class AutogrowingTextInputExample extends React.Component<{...}> {
-  constructor(props) {
-    super(props);
-
-    /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was found
-     * when making Flow check .android.js files. */
-    this.state = {
-      width: 100,
-      multiline: true,
-      text: '',
-      contentSize: {
-        width: 0,
-        height: 0,
-      },
-    };
-  }
-
-  UNSAFE_componentWillReceiveProps(props) {
-    /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was found
-     * when making Flow check .android.js files. */
-    this.setState({
-      /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was found
-       * when making Flow check .android.js files. */
-      multiline: props.multiline,
-    });
-  }
-
-  render() {
-    /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was found
-     * when making Flow check .android.js files. */
-    const {style, multiline, ...props} = this.props;
-    return (
-      <View>
-        <Text>Width:</Text>
-        <Slider
-          value={100}
-          minimumValue={0}
-          maximumValue={100}
-          step={10}
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          onValueChange={value => this.setState({width: value})}
-        />
-        <Text>Multiline:</Text>
-        <Switch
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          value={this.state.multiline}
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          onValueChange={value => this.setState({multiline: value})}
-        />
-        <Text>TextInput:</Text>
-        {/* $FlowFixMe(>=0.122.0 site=react_native_android_fb) This comment
-         * suppresses an error found when Flow v0.122.0 was deployed. To see
-         * the error, delete this comment and run Flow. */}
-        <TextInput
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          multiline={this.state.multiline}
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          style={[style, {width: this.state.width + '%'}]}
-          /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-           * found when making Flow check .android.js files. */
-          onChangeText={value => this.setState({text: value})}
-          onContentSizeChange={event =>
-            /* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-             * found when making Flow check .android.js files. */
-            this.setState({contentSize: event.nativeEvent.contentSize})
-          }
-          {...props}
-        />
-        <Text>Plain text value representation:</Text>
-        {/* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-         * found when making Flow check .android.js files. */}
-        <Text>{this.state.text}</Text>
-        {/* $FlowFixMe(>=0.78.0 site=react_native_android_fb) This issue was
-         * found when making Flow check .android.js files. */}
-        <Text>Content Size: {JSON.stringify(this.state.contentSize)}</Text>
-      </View>
-    );
-  }
-}
+  return (
+    <View>
+      <ExampleTextInput style={hasPadding ? {padding: 0} : null} />
+      <Text onPress={() => setHasPadding(!hasPadding)}>Toggle padding</Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   multiline: {
@@ -142,46 +42,45 @@ const styles = StyleSheet.create({
   singleLineWithHeightTextInput: {
     height: 30,
   },
+  wrappedText: {
+    maxWidth: 300,
+  },
 });
 
-exports.title = 'TextInput';
-exports.documentationURL = 'https://reactnative.dev/docs/textinput';
-exports.category = 'Basic';
-exports.description = 'Single and multi-line text inputs.';
-exports.examples = ([
+const examples: Array<RNTesterModuleExample> = [
   ...TextInputSharedExamples,
   {
     title: 'Colors and text inputs',
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine]}
             defaultValue="Default color text"
           />
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine, {color: 'green'}]}
             defaultValue="Green Text"
           />
-          <TextInput
+          <ExampleTextInput
             placeholder="Default placeholder text color"
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             placeholder="Red placeholder text color"
             placeholderTextColor="red"
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             placeholder="Default underline color"
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             placeholder="Blue underline color"
             style={styles.singleLine}
             underlineColorAndroid="blue"
           />
-          <TextInput
+          <ExampleTextInput
             defaultValue="Same BackgroundColor as View "
             style={[
               styles.singleLine,
@@ -190,10 +89,20 @@ exports.examples = ([
             <Text style={{backgroundColor: 'rgba(100, 100, 100, 0.3)'}}>
               Darker backgroundColor
             </Text>
-          </TextInput>
-          <TextInput
-            defaultValue="Highlight Color is red"
+          </ExampleTextInput>
+          <ExampleTextInput
+            defaultValue="Selection Color is red"
             selectionColor={'red'}
+            style={styles.singleLine}
+          />
+          <ExampleTextInput
+            defaultValue="Selection handles are red"
+            selectionHandleColor={'red'}
+            style={styles.singleLine}
+          />
+          <ExampleTextInput
+            defaultValue="Cursor Color is red"
+            cursorColor={'red'}
             style={styles.singleLine}
           />
         </View>
@@ -205,7 +114,7 @@ exports.examples = ([
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             defaultValue="Font Weight (default)"
             style={[styles.singleLine]}
           />
@@ -213,7 +122,7 @@ exports.examples = ([
             'normal',
             'bold',
             '900',
-            '800',
+            800,
             '700',
             '600',
             '500',
@@ -222,7 +131,7 @@ exports.examples = ([
             '200',
             '100',
           ].map(fontWeight => (
-            <TextInput
+            <ExampleTextInput
               defaultValue={`Font Weight (${fontWeight})`}
               key={fontWeight}
               style={[styles.singleLine, {fontWeight}]}
@@ -236,7 +145,7 @@ exports.examples = ([
     title: 'Text input, themes and heights',
     render: function (): React.Node {
       return (
-        <TextInput
+        <ExampleTextInput
           placeholder="If you set height, beware of padding set from themes"
           style={[styles.singleLineWithHeightTextInput]}
         />
@@ -248,19 +157,19 @@ exports.examples = ([
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine, {letterSpacing: 0}]}
             placeholder="letterSpacing = 0"
           />
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine, {letterSpacing: 2}]}
             placeholder="letterSpacing = 2"
           />
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine, {letterSpacing: 9}]}
             placeholder="letterSpacing = 9"
           />
-          <TextInput
+          <ExampleTextInput
             style={[styles.singleLine, {letterSpacing: -1}]}
             placeholder="letterSpacing = -1"
           />
@@ -273,12 +182,12 @@ exports.examples = ([
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             defaultValue="iloveturtles"
             secureTextEntry={true}
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             secureTextEntry={true}
             style={[styles.singleLine, {color: 'red'}]}
             placeholder="color is supported too"
@@ -292,7 +201,7 @@ exports.examples = ([
     title: 'Editable',
     render: function (): React.Node {
       return (
-        <TextInput
+        <ExampleTextInput
           defaultValue="Can't touch this! (>'-')> ^(' - ')^ <('-'<) (>'-')> ^(' - ')^"
           editable={false}
           style={styles.singleLine}
@@ -305,7 +214,7 @@ exports.examples = ([
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             autoCorrect={true}
             placeholder="multiline, aligned top-left"
             placeholderTextColor="red"
@@ -315,7 +224,7 @@ exports.examples = ([
               {textAlign: 'left', textAlignVertical: 'top'},
             ]}
           />
-          <TextInput
+          <ExampleTextInput
             autoCorrect={true}
             placeholder="multiline, aligned center"
             placeholderTextColor="green"
@@ -325,7 +234,7 @@ exports.examples = ([
               {textAlign: 'center', textAlignVertical: 'center'},
             ]}
           />
-          <TextInput
+          <ExampleTextInput
             autoCorrect={true}
             multiline={true}
             style={[
@@ -336,7 +245,32 @@ exports.examples = ([
             <Text style={styles.multiline}>
               multiline with children, aligned bottom-right
             </Text>
-          </TextInput>
+          </ExampleTextInput>
+        </View>
+      );
+    },
+  },
+  {
+    title: 'Editable and Read only',
+    render: function (): React.Node {
+      return (
+        <View>
+          <ExampleTextInput
+            placeholder="editable text input using editable prop"
+            editable
+          />
+          <ExampleTextInput
+            placeholder="uneditable text input using editable prop"
+            editable={false}
+          />
+          <ExampleTextInput
+            placeholder="editable text input using readOnly prop"
+            readOnly={false}
+          />
+          <ExampleTextInput
+            placeholder="uneditable text input using readOnly prop"
+            readOnly
+          />
         </View>
       );
     },
@@ -346,41 +280,46 @@ exports.examples = ([
     platform: 'android',
     render: function (): React.Node {
       return (
-        <View>
-          <TextInput
+        <View style={styles.wrappedText}>
+          <ExampleTextInput
             numberOfLines={2}
             multiline={true}
-            placeholder="Two line input"
+            placeholder="Two line input using numberOfLines prop"
           />
-          <TextInput
+          <ExampleTextInput
             numberOfLines={5}
             multiline={true}
-            placeholder="Five line input"
+            placeholder="Five line input using numberOfLines prop"
+          />
+          <ExampleTextInput
+            rows={2}
+            multiline={true}
+            placeholder="Two line input using rows prop"
+          />
+          <ExampleTextInput
+            rows={5}
+            multiline={true}
+            placeholder="Five line input using rows prop"
           />
         </View>
       );
     },
   },
   {
-    title: 'Auto-expanding',
+    title: 'Text Auto Complete',
     render: function (): React.Node {
       return (
         <View>
-          <AutogrowingTextInputExample
-            enablesReturnKeyAutomatically={true}
-            returnKeyType="done"
-            multiline={true}
-            style={{maxHeight: 400, minHeight: 20, backgroundColor: '#eeeeee'}}>
-            generic generic generic
-            <Text style={{fontSize: 6, color: 'red'}}>
-              small small small small small small
-            </Text>
-            <Text>regular regular</Text>
-            <Text style={{fontSize: 30, color: 'green'}}>
-              huge huge huge huge huge
-            </Text>
-            generic generic generic
-          </AutogrowingTextInputExample>
+          <ExampleTextInput autoComplete="country" placeholder="country" />
+          <ExampleTextInput
+            autoComplete="postal-address-country"
+            placeholder="postal-address-country"
+          />
+          <ExampleTextInput
+            autoComplete="one-time-code"
+            placeholder="one-time-code"
+          />
+          <ExampleTextInput autoComplete="sms-otp" placeholder="sms-otp" />
         </View>
       );
     },
@@ -398,9 +337,9 @@ exports.examples = ([
         'next',
       ];
       const returnKeyLabels = ['Compile', 'React Native'];
-      const examples = returnKeyTypes.map(type => {
+      const returnKeyExamples = returnKeyTypes.map(type => {
         return (
-          <TextInput
+          <ExampleTextInput
             key={type}
             returnKeyType={type}
             placeholder={'returnKeyType: ' + type}
@@ -410,7 +349,7 @@ exports.examples = ([
       });
       const types = returnKeyLabels.map(type => {
         return (
-          <TextInput
+          <ExampleTextInput
             key={type}
             returnKeyLabel={type}
             placeholder={'returnKeyLabel: ' + type}
@@ -420,7 +359,7 @@ exports.examples = ([
       });
       return (
         <View>
-          {examples}
+          {returnKeyExamples}
           {types}
         </View>
       );
@@ -431,18 +370,18 @@ exports.examples = ([
     render: function (): React.Node {
       return (
         <View>
-          <TextInput
+          <ExampleTextInput
             inlineImageLeft="ic_menu_black_24dp"
             placeholder="This has drawableLeft set"
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             inlineImageLeft="ic_menu_black_24dp"
             inlineImagePadding={30}
             placeholder="This has drawableLeft and drawablePadding set"
             style={styles.singleLine}
           />
-          <TextInput
+          <ExampleTextInput
             placeholder="This does not have drawable props set"
             style={styles.singleLine}
           />
@@ -456,4 +395,13 @@ exports.examples = ([
       return <ToggleDefaultPaddingExample />;
     },
   },
-]: Array<RNTesterModuleExample>);
+];
+
+module.exports = ({
+  displayName: (undefined: ?string),
+  title: 'TextInput',
+  documentationURL: 'https://reactnative.dev/docs/textinput',
+  category: 'Basic',
+  description: 'Single and multi-line text inputs.',
+  examples,
+}: RNTesterModule);

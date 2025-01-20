@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -9,15 +9,19 @@
  */
 
 import type {RNTesterModule} from '../../types/RNTesterTypes';
-import RotatingImagesExample from './RotatingImagesExample';
+
+import ColorStylesExample from './ColorStylesExample';
+import CombineExample from './CombineExample';
+import ComposeAnimationsWithEasingExample from './ComposeAnimationsWithEasingExample';
+import ComposingExample from './ComposingExample';
 import ContinuousInteractionsExample from './ContinuousInteractionsExample';
-import LoopingExample from './LoopingExample';
-import MovingBoxExample from './MovingBoxExample';
 import EasingExample from './EasingExample';
 import FadeInViewExample from './FadeInViewExample';
-import ComposeAnimationsWithEasingExample from './ComposeAnimationsWithEasingExample';
+import LoopingExample from './LoopingExample';
+import MovingBoxExample from './MovingBoxExample';
+import PressabilityWithNativeDrivers from './PressabilityWithNativeDrivers';
+import RotatingImagesExample from './RotatingImagesExample';
 import TransformBounceExample from './TransformBounceExample';
-import ComposingExample from './ComposingExample';
 import TransformStylesExample from './TransformStylesExample';
 
 export default ({
@@ -31,6 +35,7 @@ export default ({
   showIndividualExamples: true,
   examples: [
     TransformStylesExample,
+    ColorStylesExample,
     FadeInViewExample,
     ComposingExample,
     EasingExample,
@@ -40,5 +45,7 @@ export default ({
     TransformBounceExample,
     LoopingExample,
     ContinuousInteractionsExample,
+    CombineExample,
+    PressabilityWithNativeDrivers,
   ],
 }: RNTesterModule);

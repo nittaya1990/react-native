@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,39 +8,34 @@
  * @flow
  */
 
-import type {EventSubscription} from 'react-native/Libraries/vendor/emitter/EventEmitter';
-import {Dimensions, Text, useWindowDimensions} from 'react-native';
-import * as React from 'react';
+import RNTesterText from '../../components/RNTesterText';
+import React, {useEffect, useState} from 'react';
+import {Dimensions, useWindowDimensions} from 'react-native';
 
-class DimensionsSubscription extends React.Component<
-  {dim: string, ...},
-  {dims: Object, ...},
-> {
-  state = {
-    dims: Dimensions.get(this.props.dim),
-  };
+type Props = {dim: string};
 
-  _dimensionsSubscription: ?EventSubscription;
+function DimensionsSubscription(props: Props) {
+  const [dims, setDims] = useState(() => Dimensions.get(props.dim));
 
-  componentDidMount() {
-    this._dimensionsSubscription = Dimensions.addEventListener(
-      'change',
-      dimensions => {
-        this.setState({
-          dims: dimensions[this.props.dim],
-        });
-      },
-    );
-  }
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', dimensions => {
+      setDims(dimensions[props.dim]);
+    });
 
-  componentWillUnmount() {
-    this._dimensionsSubscription?.remove();
-  }
+    return () => subscription.remove();
+  }, [props.dim]);
 
-  render() {
-    return <Text>{JSON.stringify(this.state.dims, null, 2)}</Text>;
-  }
+  return (
+    <RNTesterText variant="label">{JSON.stringify(dims, null, 2)}</RNTesterText>
+  );
 }
+
+const DimensionsViaHook = () => {
+  const dims = useWindowDimensions();
+  return (
+    <RNTesterText variant="label">{JSON.stringify(dims, null, 2)}</RNTesterText>
+  );
+};
 
 exports.title = 'Dimensions';
 exports.category = 'UI';
@@ -50,22 +45,18 @@ exports.examples = [
   {
     title: 'useWindowDimensions hook',
     render(): React.Node {
-      const DimensionsViaHook = () => {
-        const dims = useWindowDimensions();
-        return <Text>{JSON.stringify(dims, null, 2)}</Text>;
-      };
       return <DimensionsViaHook />;
     },
   },
   {
     title: 'Non-component `get` API: window',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return <DimensionsSubscription dim="window" />;
     },
   },
   {
     title: 'Non-component `get` API: screen',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return <DimensionsSubscription dim="screen" />;
     },
   },

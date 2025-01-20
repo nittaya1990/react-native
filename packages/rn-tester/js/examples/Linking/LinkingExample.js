@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -9,23 +9,22 @@
 
 'use strict';
 
-const React = require('react');
-const {
+import RNTesterBlock from '../../components/RNTesterBlock';
+import RNTesterText from '../../components/RNTesterText';
+import React from 'react';
+import {
   Button,
   Linking,
   Platform,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   ToastAndroid,
+  TouchableOpacity,
   View,
-} = require('react-native');
+} from 'react-native';
 
-const RNTesterBlock = require('../../components/RNTesterBlock');
-
-type Props = $ReadOnly<{|
+type Props = $ReadOnly<{
   url?: ?string,
-|}>;
+}>;
 
 class OpenURLButton extends React.Component<Props> {
   handleClick = () => {
@@ -33,7 +32,13 @@ class OpenURLButton extends React.Component<Props> {
       if (supported) {
         Linking.openURL(this.props.url);
       } else {
-        console.log("Don't know how to open URI: " + this.props.url);
+        console.log(
+          `Don't know how to open URI: ${
+            this.props.url
+          }, ensure you have an app installed that handles the "${
+            this.props.url.split(':')?.[0]
+          }" scheme`,
+        );
       }
     });
   };
@@ -42,7 +47,7 @@ class OpenURLButton extends React.Component<Props> {
     return (
       <TouchableOpacity onPress={this.handleClick}>
         <View style={styles.button}>
-          <Text style={styles.text}>Open {this.props.url}</Text>
+          <RNTesterText style={styles.text}>Open {this.props.url}</RNTesterText>
         </View>
       </TouchableOpacity>
     );
@@ -72,7 +77,7 @@ class SendIntentButton extends React.Component<Props> {
     return (
       <TouchableOpacity onPress={this.handleIntent}>
         <View style={[styles.button, styles.buttonIntent]}>
-          <Text style={styles.text}>{this.props.action}</Text>
+          <RNTesterText style={styles.text}>{this.props.action}</RNTesterText>
         </View>
       </TouchableOpacity>
     );
@@ -94,9 +99,9 @@ class IntentAndroidExample extends React.Component {
         {Platform.OS === 'android' && (
           <RNTesterBlock title="Send intents">
             <SendIntentButton action="android.intent.action.POWER_USAGE_SUMMARY" />
-            <Text style={styles.textSeparator}>
+            <RNTesterText style={styles.textSeparator}>
               Next one will crash if Facebook app is not installed.
-            </Text>
+            </RNTesterText>
             <SendIntentButton
               action="android.settings.APP_NOTIFICATION_SETTINGS"
               extras={[
@@ -134,13 +139,15 @@ exports.description = 'Shows how to use Linking to open URLs.';
 exports.examples = [
   {
     title: 'Open external URLs',
-    render: function (): React.Element<typeof IntentAndroidExample> {
+    description:
+      'Custom schemes may require specific apps to be installed on the device. Note: Phone app is not supported in the simulator.',
+    render(): React.MixedElement {
       return <IntentAndroidExample />;
     },
   },
   {
     title: 'Open settings app',
-    render: function (): React.Element<typeof LinkingChangesListenerExample> {
+    render(): React.MixedElement {
       return <OpenSettingsExample />;
     },
   },

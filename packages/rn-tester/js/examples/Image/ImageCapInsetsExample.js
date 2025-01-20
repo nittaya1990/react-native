@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -12,11 +12,10 @@
 
 const React = require('react');
 const ReactNative = require('react-native');
-
 const nativeImageSource = require('react-native/Libraries/Image/nativeImageSource');
 const {Image, StyleSheet, Text, View} = ReactNative;
 
-type Props = $ReadOnly<{||}>;
+type Props = $ReadOnly<{}>;
 class ImageCapInsetsExample extends React.Component<Props> {
   render(): React.Node {
     return (

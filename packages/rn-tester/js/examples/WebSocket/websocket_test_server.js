@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -13,10 +13,9 @@
 
 /* eslint-env node */
 
-const WebSocket = require('ws');
-
 const fs = require('fs');
 const path = require('path');
+const WebSocket = require('ws');
 
 console.log(`\
 Test server for WebSocketExample
@@ -32,6 +31,7 @@ server.on('connection', ws => {
   ws.on('message', message => {
     console.log('Received message:', message);
     if (respondWithBinary) {
+      // $FlowFixMe[incompatible-call]
       message = Buffer.from(message);
     }
     if (message === 'getImage') {

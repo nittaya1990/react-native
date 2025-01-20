@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,14 +10,14 @@
 
 'use strict';
 
+import {RNTesterThemeContext} from './RNTesterTheme';
 import * as React from 'react';
 import {StyleSheet, View} from 'react-native';
-import {RNTesterThemeContext} from './RNTesterTheme';
 
-type Props = $ReadOnly<{|
+type Props = $ReadOnly<{
   children?: ?React.Node,
   testID?: string,
-|}>;
+}>;
 
 /**
  * Container view for a block of configuration options for an example.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -22,9 +22,9 @@ const {
   View,
 } = require('react-native');
 
-type MessageProps = $ReadOnly<{||}>;
+type MessageProps = $ReadOnly<{}>;
 class Message extends React.PureComponent<MessageProps> {
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.textBubbleBackground}>
         <Text style={styles.text}>Text Message</Text>
@@ -33,12 +33,12 @@ class Message extends React.PureComponent<MessageProps> {
   }
 }
 
-type TextInputProps = $ReadOnly<{||}>;
-type TextInputState = {|text: string|};
+type TextInputProps = $ReadOnly<{}>;
+type TextInputState = {text: string};
 class TextInputBar extends React.PureComponent<TextInputProps, TextInputState> {
-  state = {text: ''};
+  state: TextInputState = {text: ''};
 
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.textInputContainer}>
         <TextInput
@@ -61,9 +61,9 @@ class TextInputBar extends React.PureComponent<TextInputProps, TextInputState> {
 }
 
 const BAR_HEIGHT = 44;
-type InputAccessoryProps = $ReadOnly<{||}>;
+type InputAccessoryProps = $ReadOnly<{}>;
 class InputAccessoryViewExample extends React.Component<InputAccessoryProps> {
-  render() {
+  render(): React.Node {
     return (
       <>
         <ScrollView style={styles.fill} keyboardDismissMode="interactive">

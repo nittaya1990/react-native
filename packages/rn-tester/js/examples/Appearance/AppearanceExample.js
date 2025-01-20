@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,51 +8,42 @@
  * @flow
  */
 
-import * as React from 'react';
-import {Appearance, Text, useColorScheme, View} from 'react-native';
-import type {AppearancePreferences} from 'react-native/Libraries/Utilities/NativeAppearance';
-import type {EventSubscription} from 'react-native/Libraries/vendor/emitter/EventEmitter';
+import type {ColorSchemeName} from 'react-native/Libraries/Utilities/NativeAppearance';
+
+import RNTesterText from '../../components/RNTesterText';
 import {RNTesterThemeContext, themes} from '../../components/RNTesterTheme';
+import * as React from 'react';
+import {useEffect, useState} from 'react';
+import {Appearance, Button, Text, View, useColorScheme} from 'react-native';
 
-class ColorSchemeSubscription extends React.Component<
-  {...},
-  {colorScheme: ?string, ...},
-> {
-  _subscription: ?EventSubscription;
+function ColorSchemeSubscription() {
+  const [colorScheme, setColorScheme] = useState<?ColorSchemeName | string>(
+    Appearance.getColorScheme(),
+  );
 
-  state = {
-    colorScheme: Appearance.getColorScheme(),
-  };
-
-  componentDidMount() {
-    this._subscription = Appearance.addChangeListener(
-      (preferences: AppearancePreferences) => {
-        const {colorScheme} = preferences;
-        this.setState({colorScheme});
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(
+      ({colorScheme: newColorScheme}: {colorScheme: ?ColorSchemeName}) => {
+        setColorScheme(newColorScheme);
       },
     );
-  }
+    return () => subscription.remove();
+  }, [setColorScheme]);
 
-  componentWillUnmount() {
-    this._subscription?.remove();
-  }
-
-  render() {
-    return (
-      <RNTesterThemeContext.Consumer>
-        {theme => {
-          return (
-            <ThemedContainer>
-              <ThemedText>{this.state.colorScheme}</ThemedText>
-            </ThemedContainer>
-          );
-        }}
-      </RNTesterThemeContext.Consumer>
-    );
-  }
+  return (
+    <RNTesterThemeContext.Consumer>
+      {theme => {
+        return (
+          <ThemedContainer>
+            <ThemedText>{colorScheme}</ThemedText>
+          </ThemedContainer>
+        );
+      }}
+    </RNTesterThemeContext.Consumer>
+  );
 }
 
-const ThemedContainer = props => (
+const ThemedContainer = (props: {children: React.Node}) => (
   <RNTesterThemeContext.Consumer>
     {theme => {
       return (
@@ -69,13 +60,104 @@ const ThemedContainer = props => (
   </RNTesterThemeContext.Consumer>
 );
 
-const ThemedText = props => (
+const ThemedText = (props: {children: React.Node | string}) => (
   <RNTesterThemeContext.Consumer>
     {theme => {
       return <Text style={{color: theme.LabelColor}}>{props.children}</Text>;
     }}
   </RNTesterThemeContext.Consumer>
 );
+
+const AppearanceViaHook = () => {
+  const colorScheme = useColorScheme();
+  return (
+    <RNTesterThemeContext.Provider
+      value={colorScheme === 'dark' ? themes.dark : themes.light}>
+      <ThemedContainer>
+        <ThemedText>useColorScheme(): {colorScheme}</ThemedText>
+      </ThemedContainer>
+    </RNTesterThemeContext.Provider>
+  );
+};
+
+const ColorShowcase = (props: {themeName: string}) => (
+  <RNTesterThemeContext.Consumer>
+    {theme => {
+      return (
+        <View
+          style={{
+            marginVertical: 20,
+            backgroundColor: theme.SystemBackgroundColor,
+          }}>
+          <Text style={{fontWeight: '700', color: theme.LabelColor}}>
+            {props.themeName}
+          </Text>
+          {Object.keys(theme).map(
+            key =>
+              typeof theme[key] === 'string' && (
+                <View style={{flexDirection: 'row'}} key={key}>
+                  <View
+                    style={{
+                      width: 50,
+                      height: 50,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      backgroundColor: theme[key],
+                    }}
+                  />
+                  <View>
+                    <Text
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 2,
+                        color: theme.LabelColor,
+                        fontWeight: '600',
+                      }}>
+                      {key}
+                    </Text>
+                    <Text
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 2,
+                        color: theme.LabelColor,
+                      }}>
+                      {theme[key]}
+                    </Text>
+                  </View>
+                </View>
+              ),
+          )}
+        </View>
+      );
+    }}
+  </RNTesterThemeContext.Consumer>
+);
+
+const ToggleNativeAppearance = () => {
+  const [nativeColorScheme, setNativeColorScheme] =
+    useState<ColorSchemeName | null>(null);
+  const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    Appearance.setColorScheme(nativeColorScheme);
+  }, [nativeColorScheme]);
+
+  return (
+    <View>
+      <RNTesterText>Native colorScheme: {nativeColorScheme}</RNTesterText>
+      <RNTesterText>Current colorScheme: {colorScheme}</RNTesterText>
+      <Button
+        title="Set to light"
+        onPress={() => setNativeColorScheme('light')}
+      />
+      <Button
+        title="Set to dark"
+        onPress={() => setNativeColorScheme('dark')}
+      />
+      <Button title="Unset" onPress={() => setNativeColorScheme(null)} />
+    </View>
+  );
+};
 
 exports.title = 'Appearance';
 exports.category = 'UI';
@@ -85,29 +167,18 @@ exports.examples = [
   {
     title: 'useColorScheme hook',
     render(): React.Node {
-      const AppearanceViaHook = () => {
-        const colorScheme = useColorScheme();
-        return (
-          <RNTesterThemeContext.Provider
-            value={colorScheme === 'dark' ? themes.dark : themes.light}>
-            <ThemedContainer>
-              <ThemedText>useColorScheme(): {colorScheme}</ThemedText>
-            </ThemedContainer>
-          </RNTesterThemeContext.Provider>
-        );
-      };
       return <AppearanceViaHook />;
     },
   },
   {
     title: 'Non-component `getColorScheme` API',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return <ColorSchemeSubscription />;
     },
   },
   {
     title: 'Consuming Context',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return (
         <RNTesterThemeContext.Consumer>
           {theme => {
@@ -125,7 +196,7 @@ exports.examples = [
   },
   {
     title: 'Context forced to light theme',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return (
         <RNTesterThemeContext.Provider value={themes.light}>
           <ThemedContainer>
@@ -139,7 +210,7 @@ exports.examples = [
   },
   {
     title: 'Context forced to dark theme',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return (
         <RNTesterThemeContext.Provider value={themes.dark}>
           <ThemedContainer>
@@ -154,59 +225,7 @@ exports.examples = [
   {
     title: 'RNTester App Colors',
     description: 'A light and a dark theme based on standard iOS 13 colors.',
-    render(): React.Element<any> {
-      const ColorShowcase = props => (
-        <RNTesterThemeContext.Consumer>
-          {theme => {
-            return (
-              <View
-                style={{
-                  marginVertical: 20,
-                  backgroundColor: theme.SystemBackgroundColor,
-                }}>
-                <Text style={{fontWeight: '700', color: theme.LabelColor}}>
-                  {props.themeName}
-                </Text>
-                {Object.keys(theme).map(key => (
-                  <View style={{flexDirection: 'row'}} key={key}>
-                    <View
-                      style={{
-                        width: 50,
-                        height: 50,
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        backgroundColor: theme[key],
-                      }}
-                    />
-                    <View>
-                      <Text
-                        style={{
-                          paddingHorizontal: 16,
-                          paddingVertical: 2,
-                          color: theme.LabelColor,
-                          fontWeight: '600',
-                        }}>
-                        {key}
-                      </Text>
-                      <Text
-                        style={{
-                          paddingHorizontal: 16,
-                          paddingVertical: 2,
-                          color: theme.LabelColor,
-                        }}>
-                        {typeof theme[key] === 'string'
-                          ? theme[key]
-                          : JSON.stringify(theme[key])}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            );
-          }}
-        </RNTesterThemeContext.Consumer>
-      );
-
+    render(): React.MixedElement {
       return (
         <View>
           <RNTesterThemeContext.Provider value={themes.light}>
@@ -217,6 +236,13 @@ exports.examples = [
           </RNTesterThemeContext.Provider>
         </View>
       );
+    },
+  },
+  {
+    title: 'Toggle native appearance',
+    description: 'Overwrite application-level appearance mode',
+    render(): React.MixedElement {
+      return <ToggleNativeAppearance />;
     },
   },
 ];

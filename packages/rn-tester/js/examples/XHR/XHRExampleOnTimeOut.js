@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,8 +10,9 @@
 
 'use strict';
 
-const React = require('react');
+import RNTesterText from '../../components/RNTesterText';
 
+const React = require('react');
 const {StyleSheet, Text, TouchableHighlight, View} = require('react-native');
 
 class XHRExampleOnTimeOut extends React.Component<any, any> {
@@ -80,7 +81,7 @@ class XHRExampleOnTimeOut extends React.Component<any, any> {
     return (
       <View>
         {button}
-        <Text>{this.state.status}</Text>
+        <RNTesterText>{this.state.status}</RNTesterText>
       </View>
     );
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,33 +8,34 @@
  * @flow strict-local
  */
 
+import type {ViewProps} from 'react-native/Libraries/Components/View/ViewPropTypes';
+import type {HostComponent} from 'react-native/Libraries/Renderer/shims/ReactNativeTypes';
 import type {
-  Int32,
-  Float,
   BubblingEventHandler,
   DirectEventHandler,
+  Float,
+  Int32,
   WithDefault,
-} from '../../../../../Libraries/Types/CodegenTypes';
-import type {ViewProps} from '../../../../../Libraries/Components/View/ViewPropTypes';
-import codegenNativeComponent from '../../../../../Libraries/Utilities/codegenNativeComponent';
-import type {HostComponent} from '../../../../../Libraries/Renderer/shims/ReactNativeTypes';
+} from 'react-native/Libraries/Types/CodegenTypes';
 
-type OnChangeEvent = $ReadOnly<{|
+import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
+
+type OnChangeEvent = $ReadOnly<{
   value: boolean,
   source?: string,
   progress: ?Int32,
   scale?: ?Float,
-|}>;
+}>;
 
-type OnEventDirect = $ReadOnly<{|
+type OnEventDirect = $ReadOnly<{
   value: boolean,
-|}>;
+}>;
 
-type OnOrientationChangeEvent = $ReadOnly<{|
+type OnOrientationChangeEvent = $ReadOnly<{
   orientation: 'landscape' | 'portrait',
-|}>;
+}>;
 
-type NativeProps = $ReadOnly<{|
+type NativeProps = $ReadOnly<{
   ...ViewProps,
 
   // Props
@@ -56,7 +57,7 @@ type NativeProps = $ReadOnly<{|
     null,
     'paperBubblingName',
   >,
-|}>;
+}>;
 
 export default (codegenNativeComponent<NativeProps>(
   'EventPropsNativeComponentView',

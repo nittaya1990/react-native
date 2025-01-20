@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,14 +10,13 @@
 
 'use strict';
 
-const React = require('react');
+import type {ViewProps} from 'react-native/Libraries/Components/View/ViewPropTypes';
+import type {SyntheticEvent} from 'react-native/Libraries/Types/CoreEventTypes';
 
+const React = require('react');
 const {NativeModules, StyleSheet, UIManager, View} = require('react-native');
 
 const {TestModule} = NativeModules;
-
-import type {SyntheticEvent} from 'react-native/Libraries/Types/CoreEventTypes';
-import type {ViewProps} from 'react-native/Libraries/Components/View/ViewPropTypes';
 
 // Verify that RCTSnapshot is part of the UIManager since it is only loaded
 // if you have linked against RCTTest like in tests, otherwise we will have
@@ -30,11 +29,11 @@ type SnapshotReadyEvent = SyntheticEvent<
   $ReadOnly<{testIdentifier: string, ...}>,
 >;
 
-type Props = $ReadOnly<{|
+type Props = $ReadOnly<{
   ...ViewProps,
   onSnapshotReady?: ?(event: SnapshotReadyEvent) => mixed,
   testIdentifier?: ?string,
-|}>;
+}>;
 
 class SnapshotViewIOS extends React.Component<Props> {
   onDefaultAction: (event: SnapshotReadyEvent) => void = (

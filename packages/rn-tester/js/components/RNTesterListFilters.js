@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -11,7 +11,6 @@
 'use strict';
 
 const React = require('react');
-
 const {StyleSheet, Text, TouchableOpacity, View} = require('react-native');
 
 const filters = ['Basic', 'UI', 'ListView', 'iOS', 'Android'];
@@ -23,7 +22,7 @@ type Props = {
 
 class RNTesterListFilters extends React.Component<
   Props,
-  {|currentFilter: string|},
+  {currentFilter: string},
 > {
   constructor(props: Props) {
     super(props);

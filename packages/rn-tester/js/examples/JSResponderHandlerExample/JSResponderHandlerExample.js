@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,11 +8,9 @@
  * @flow strict-local
  */
 
-const React = require('react');
-
-const {Text, View, StyleSheet} = require('react-native');
-
-import {PanResponder, ScrollView} from 'react-native';
+import RNTesterText from '../../components/RNTesterText';
+import React from 'react';
+import {PanResponder, ScrollView, StyleSheet, View} from 'react-native';
 
 exports.displayName = 'JSResponderHandlerExample';
 exports.framework = 'React';
@@ -41,7 +39,11 @@ exports.examples = [
         views[i] = (
           <View key={i} style={styles.row} collapsable={false}>
             <View style={styles.touchable_area} collapsable={false}>
-              <Text>I am row {i}</Text>
+              <RNTesterText
+                testID="row_js_responder_handler"
+                style={styles.rowText}>
+                I am row {i}
+              </RNTesterText>
             </View>
           </View>
         );
@@ -69,6 +71,9 @@ const styles = StyleSheet.create({
   },
   row: {
     height: 25,
+  },
+  rowText: {
+    color: 'black',
   },
   touchable_area: {
     width: 150,

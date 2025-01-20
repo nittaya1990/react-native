@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,9 +8,9 @@
  * @flow strict-local
  */
 
-import * as React from 'react';
-import {View, Text, StyleSheet, Button, Platform} from 'react-native';
 import {type RNTesterTheme} from './RNTesterTheme';
+import * as React from 'react';
+import {Button, Platform, StyleSheet, Text, View} from 'react-native';
 
 function RNTTestDetails({
   description,
@@ -23,20 +23,28 @@ function RNTTestDetails({
   title: string,
   theme: RNTesterTheme,
 }): React.Node {
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(true);
 
   const content = (
     <>
       {description == null ? null : (
         <View style={styles.section}>
-          <Text style={styles.heading}>Description</Text>
-          <Text style={styles.paragraph}>{description}</Text>
+          <Text style={[styles.heading, {color: theme.LabelColor}]}>
+            Description
+          </Text>
+          <Text style={[styles.paragraph, {color: theme.LabelColor}]}>
+            {description}
+          </Text>
         </View>
       )}
       {expect == null ? null : (
         <View style={styles.section}>
-          <Text style={styles.heading}>Expectation</Text>
-          <Text style={styles.paragraph}>{expect}</Text>
+          <Text style={[styles.heading, {color: theme.LabelColor}]}>
+            Expectation
+          </Text>
+          <Text style={[styles.paragraph, {color: theme.LabelColor}]}>
+            {expect}
+          </Text>
         </View>
       )}
     </>
@@ -78,7 +86,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 16,
-    color: 'grey',
     fontWeight: '500',
   },
   paragraph: {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,18 +8,26 @@
  * @flow strict-local
  */
 
+import type {RNTesterModule} from '../../types/RNTesterTypes';
+
 import * as React from 'react';
 import {
+  Alert,
   Animated,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
-  Platform,
   View,
 } from 'react-native';
+import ReactNativeFeatureFlags from 'react-native/Libraries/ReactNative/ReactNativeFeatureFlags';
 
 const {useEffect, useRef, useState} = React;
+
+function onPressablePress(pressableName: string) {
+  Alert.alert(`Your application has been ${pressableName}!`);
+}
 
 const forceTouchAvailable =
   (Platform.OS === 'ios' && Platform.constants.forceTouchAvailable) || false;
@@ -42,7 +50,9 @@ function ContentPress() {
             setTimesPressed(current => current + 1);
           }}>
           {({pressed}) => (
-            <Text style={styles.text}>{pressed ? 'Pressed!' : 'Press Me'}</Text>
+            <Text testID="one_press_me_button" style={styles.button}>
+              {pressed ? 'Pressed!' : 'Press Me'}
+            </Text>
           )}
         </Pressable>
       </View>
@@ -80,10 +90,24 @@ function TextOnPressBox() {
   );
 }
 
+function PressableAriaLabel() {
+  return (
+    <View style={[styles.row, styles.centered]}>
+      <Pressable
+        style={styles.wrapper}
+        testID="pressable_aria_label"
+        aria-label="pressable with aria label"
+        accessibilityRole="button"
+        onPress={() => onPressablePress('pressed')}>
+        <Text style={styles.button}>Press Me</Text>
+      </Pressable>
+    </View>
+  );
+}
 function PressableFeedbackEvents() {
-  const [eventLog, setEventLog] = useState([]);
+  const [eventLog, setEventLog] = useState<Array<string>>([]);
 
-  function appendEvent(eventName) {
+  function appendEvent(eventName: string) {
     const limit = 6;
     setEventLog(current => {
       return [eventName].concat(current.slice(0, limit - 1));
@@ -117,9 +141,9 @@ function PressableFeedbackEvents() {
 }
 
 function PressableDelayEvents() {
-  const [eventLog, setEventLog] = useState([]);
+  const [eventLog, setEventLog] = useState<Array<string>>([]);
 
-  function appendEvent(eventName) {
+  function appendEvent(eventName: string) {
     const limit = 6;
     const newEventLog = eventLog.slice(0, limit - 1);
     newEventLog.unshift(eventName);
@@ -166,6 +190,7 @@ function ForceTouchExample() {
           style={styles.wrapper}
           testID="pressable_3dtouch_button"
           onStartShouldSetResponder={() => true}
+          // $FlowFixMe[sketchy-null-number]
           onResponderMove={event => setForce(event.nativeEvent?.force || 1)}
           onResponderRelease={event => setForce(0)}>
           <Text style={styles.button}>Press Me</Text>
@@ -205,7 +230,7 @@ function PressableHitSlop() {
 
 function PressableNativeMethods() {
   const [status, setStatus] = useState<?boolean>(null);
-  const ref = useRef(null);
+  const ref = useRef<$FlowFixMe>(null);
 
   useEffect(() => {
     setStatus(ref.current != null && typeof ref.current.measure === 'function');
@@ -217,12 +242,12 @@ function PressableNativeMethods() {
         <Pressable ref={ref}>
           <View />
         </Pressable>
-        <Text>
+        <Text style={styles.button}>
           {status == null
             ? 'Missing Ref!'
             : status === true
-            ? 'Native Methods Exist'
-            : 'Native Methods Missing!'}
+              ? 'Native Methods Exist'
+              : 'Native Methods Missing!'}
         </Text>
       </View>
     </>
@@ -246,6 +271,25 @@ function PressableDisabled() {
         <Text style={styles.button}>Enabled Pressable</Text>
       </Pressable>
     </>
+  );
+}
+
+function PressableHoverStyle() {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <View style={styles.row}>
+      <Pressable
+        style={[
+          {
+            backgroundColor: hovered ? 'rgb(210, 230, 255)' : 'white',
+          },
+          styles.wrapperCustom,
+        ]}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}>
+        <Text style={styles.text}>Hover Me</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -279,6 +323,9 @@ const styles = StyleSheet.create({
   wrapperCustom: {
     borderRadius: 8,
     padding: 6,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   hitSlopWrapper: {
     backgroundColor: 'red',
@@ -317,12 +364,7 @@ const styles = StyleSheet.create({
   },
 });
 
-exports.displayName = (undefined: ?string);
-exports.description = 'Component for making views pressable.';
-exports.title = 'Pressable';
-exports.category = 'UI';
-exports.documentationURL = 'https://reactnative.dev/docs/pressable';
-exports.examples = [
+const examples = [
   {
     title: 'Change content based on Press',
     render(): React.Node {
@@ -342,6 +384,33 @@ exports.examples = [
               styles.wrapperCustom,
             ]}>
             <Text style={styles.text}>Press Me</Text>
+          </Pressable>
+        </View>
+      );
+    },
+  },
+  {
+    title: 'Change child based on Press',
+    description:
+      ('You should be able to press the button, move your finger while pressing, and release it with the proper status updates.': string),
+    render(): React.Node {
+      return (
+        <View style={styles.row}>
+          <Pressable
+            style={({pressed}) => [
+              {
+                backgroundColor: pressed ? 'rgb(210, 230, 255)' : 'white',
+              },
+              styles.wrapperCustom,
+            ]}>
+            {({pressed}) => (
+              <>
+                {pressed && <Text style={styles.text}>Pressed!</Text>}
+                {!pressed && (
+                  <Text style={styles.text}>Press me and move your finger</Text>
+                )}
+              </>
+            )}
           </Pressable>
         </View>
       );
@@ -502,4 +571,30 @@ exports.examples = [
       return <PressableDisabled />;
     },
   },
+  {
+    title: 'Pressable with aria-label="label"',
+    description: ('Note: This prop changes the text that a screen ' +
+      'reader announces (there are no visual differences).': string),
+    render: function (): React.Node {
+      return <PressableAriaLabel />;
+    },
+  },
 ];
+
+if (ReactNativeFeatureFlags.shouldPressibilityUseW3CPointerEventsForHover()) {
+  examples.push({
+    title: 'Change style based on Hover',
+    render(): React.Node {
+      return <PressableHoverStyle />;
+    },
+  });
+}
+
+module.exports = ({
+  title: 'Pressable',
+  documentationURL: 'https://reactnative.dev/docs/pressable',
+  category: 'UI',
+  description: 'Component for making views pressable.',
+  displayName: 'Pressable',
+  examples,
+}: RNTesterModule);

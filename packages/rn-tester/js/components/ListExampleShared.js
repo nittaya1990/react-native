@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,19 +10,20 @@
 
 'use strict';
 
-const React = require('react');
-
-const {
+import RNTesterText from './RNTesterText';
+import React from 'react';
+import {
+  ActivityIndicator,
   Animated,
   Image,
   Platform,
-  TouchableHighlight,
   StyleSheet,
   Switch,
   Text,
   TextInput,
+  TouchableHighlight,
   View,
-} = require('react-native');
+} from 'react-native';
 
 export type Item = {
   title: string,
@@ -33,16 +34,28 @@ export type Item = {
   ...
 };
 
-function genItemData(count: number, start: number = 0): Array<Item> {
+function genItemData(i: number): Item {
+  const itemHash = Math.abs(hashCode('Item ' + i));
+  return {
+    title: 'Item ' + i,
+    text: LOREM_IPSUM.slice(0, (itemHash % 301) + 20),
+    key: String(i),
+    pressed: false,
+  };
+}
+
+function genNewerItems(count: number, start: number = 0): Array<Item> {
   const dataBlob = [];
-  for (let ii = start; ii < count + start; ii++) {
-    const itemHash = Math.abs(hashCode('Item ' + ii));
-    dataBlob.push({
-      title: 'Item ' + ii,
-      text: LOREM_IPSUM.substr(0, (itemHash % 301) + 20),
-      key: String(ii),
-      pressed: false,
-    });
+  for (let i = start; i < count + start; i++) {
+    dataBlob.push(genItemData(i));
+  }
+  return dataBlob;
+}
+
+function genOlderItems(count: number, start: number = 0): Array<Item> {
+  const dataBlob = [];
+  for (let i = count; i > 0; i--) {
+    dataBlob.push(genItemData(start - i));
   }
   return dataBlob;
 }
@@ -58,6 +71,7 @@ class ItemComponent extends React.PureComponent<{
   onShowUnderlay?: () => void,
   onHideUnderlay?: () => void,
   textSelectable?: ?boolean,
+  testID?: ?string,
   ...
 }> {
   _onPress = () => {
@@ -81,6 +95,7 @@ class ItemComponent extends React.PureComponent<{
           ]}>
           {!item.noImage && <Image style={styles.thumb} source={imgSource} />}
           <Text
+            testID={this.props.testID}
             style={styles.text}
             selectable={textSelectable}
             numberOfLines={horizontal || fixedHeight ? 3 : undefined}>
@@ -146,6 +161,12 @@ class SeparatorComponent extends React.PureComponent<{...}> {
     return <View style={styles.separator} />;
   }
 }
+
+const LoadingComponent: React.ComponentType<{}> = React.memo(() => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator />
+  </View>
+));
 
 class ItemSeparatorComponent extends React.PureComponent<$FlowFixMeProps> {
   render(): React.Node {
@@ -220,7 +241,7 @@ function getItemLayout(
   data: any,
   index: number,
   horizontal?: boolean,
-): {|index: number, length: number, offset: number|} {
+): {index: number, length: number, offset: number} {
   const [length, separator, header] = horizontal
     ? [HORIZ_WIDTH, 0, HEADER.width]
     : [ITEM_HEIGHT, SEPARATOR_HEIGHT, HEADER.height];
@@ -236,14 +257,16 @@ function renderSmallSwitchOption(
   label: string,
   value: boolean,
   setValue: boolean => void,
+  testID?: string,
 ): null | React.Node {
   if (Platform.isTV) {
     return null;
   }
   return (
     <View style={styles.option}>
-      <Text>{label}:</Text>
+      <RNTesterText>{label}:</RNTesterText>
       <Switch
+        testID={testID}
         style={styles.smallSwitch}
         value={value}
         onValueChange={setValue}
@@ -352,6 +375,13 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 100,
+    borderTopWidth: 1,
+    borderTopColor: 'rgb(200, 199, 204)',
+  },
 });
 
 module.exports = {
@@ -362,8 +392,10 @@ module.exports = {
   ItemSeparatorComponent,
   PlainInput,
   SeparatorComponent,
+  LoadingComponent,
   Spindicator,
-  genItemData,
+  genNewerItems,
+  genOlderItems,
   getItemLayout,
   pressItem,
   renderSmallSwitchOption,

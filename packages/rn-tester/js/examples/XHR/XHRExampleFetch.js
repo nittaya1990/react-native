@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,9 +10,16 @@
 
 'use strict';
 
-const React = require('react');
-
-const {StyleSheet, Text, TextInput, View, Platform} = require('react-native');
+import {RNTesterThemeContext} from '../../components/RNTesterTheme';
+import React from 'react';
+import {
+  Button,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 class XHRExampleFetch extends React.Component<any, any> {
   responseURL: ?string;
@@ -28,6 +35,7 @@ class XHRExampleFetch extends React.Component<any, any> {
   }
 
   submit(uri: string) {
+    // $FlowFixMe[unused-promise]
     fetch(uri)
       .then(response => {
         this.responseURL = response.url;
@@ -39,15 +47,16 @@ class XHRExampleFetch extends React.Component<any, any> {
       });
   }
 
-  _renderHeaders() {
+  _renderHeaders(): null | Array<React.Node> {
     if (!this.responseHeaders) {
       return null;
     }
 
-    const responseHeaders = [];
+    const responseHeaders: Array<React.Node> = [];
     const keys = Object.keys(this.responseHeaders.map);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
+      // $FlowFixMe[incompatible-use]
       const value = this.responseHeaders.get(key);
       responseHeaders.push(
         <Text>
@@ -56,6 +65,25 @@ class XHRExampleFetch extends React.Component<any, any> {
       );
     }
     return responseHeaders;
+  }
+
+  startRepeatedlyFetch() {
+    const doRequest = () => {
+      const url =
+        'https://microsoftedge.github.io/Demos/json-dummy-data/5MB-min.json';
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(() => {
+          console.log('fetch one time');
+        })
+        .catch(error => console.error(error));
+    };
+    setInterval(doRequest, 500);
   }
 
   render(): React.Node {
@@ -86,20 +114,33 @@ class XHRExampleFetch extends React.Component<any, any> {
     ) : null;
 
     return (
-      <View>
-        <Text style={styles.label}>Edit URL to submit:</Text>
-        <TextInput
-          returnKeyType="go"
-          defaultValue="http://www.posttestserver.com/post.php"
-          onSubmitEditing={event => {
-            this.submit(event.nativeEvent.text);
-          }}
-          style={styles.textInput}
-        />
-        {responseURL}
-        {responseHeaders}
-        {response}
-      </View>
+      <RNTesterThemeContext.Consumer>
+        {theme => (
+          <>
+            <Button
+              title="RepeatedlyFetch"
+              onPress={() => this.startRepeatedlyFetch()}
+            />
+            <Text style={styles.label}>Edit URL to submit:</Text>
+            <TextInput
+              returnKeyType="go"
+              defaultValue="http://www.posttestserver.com/post.php"
+              onSubmitEditing={event => {
+                this.submit(event.nativeEvent.text);
+              }}
+              style={[
+                styles.textInput,
+                {
+                  color: theme.LabelColor,
+                },
+              ]}
+            />
+            {responseURL}
+            {responseHeaders}
+            {response}
+          </>
+        )}
+      </RNTesterThemeContext.Consumer>
     );
   }
 }

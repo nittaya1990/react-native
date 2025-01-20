@@ -1,29 +1,41 @@
 /*
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
+  repositories {
+    mavenCentral()
+    google()
+    gradlePluginPortal()
+  }
+  includeBuild("packages/gradle-plugin/")
 }
 
 include(
-    ":ReactAndroid",
-    ":packages:react-native-codegen:android",
-    ":packages:rn-tester:android:app"
-)
+    ":packages:react-native:ReactAndroid",
+    ":packages:react-native:ReactAndroid:hermes-engine",
+    ":packages:react-native:ReactAndroid:external-artifacts",
+    ":packages:rn-tester:android:app")
 
-// Include this to enable codegen Gradle plugin.
-includeBuild("packages/react-native-gradle-plugin/")
+includeBuild("packages/gradle-plugin/")
 
-// Include this to build the Android template as well and make sure is not broken.
-if (File("template/node_modules/").exists()) {
-    includeBuild("template/android/") {
-        name = "template-android"
-    }
+dependencyResolutionManagement {
+  versionCatalogs {
+    create("libs") { from(files("packages/react-native/gradle/libs.versions.toml")) }
+  }
+}
+
+rootProject.name = "react-native-github"
+
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention").version("0.5.0")
+  id("com.facebook.react.settings")
+}
+
+configure<com.facebook.react.ReactSettingsExtension> {
+  autolinkLibrariesFromCommand(
+      workingDirectory = file("packages/rn-tester/"), lockFiles = files("yarn.lock"))
 }

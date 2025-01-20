@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,20 +10,16 @@
 
 /* eslint-disable no-alert */
 
-import * as React from 'react';
-import {Modal, Platform, StyleSheet, Switch, Text, View} from 'react-native';
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
-import RNTOption from '../../components/RNTOption';
-const RNTesterButton = require('../../components/RNTesterButton');
+import type {Props as ModalProps} from 'react-native/Libraries/Modal/Modal';
 
-const supportedOrientations = {
-  Portrait: ['portrait'],
-  Landscape: ['landscape'],
-  'Landscape Left': ['landscape-left'],
-  'Portrait and Landscape Right': ['portrait', 'landscape-right'],
-  'Portrait and Landscape': ['portrait', 'landscape'],
-  Default: [],
-};
+import RNTesterButton from '../../components/RNTesterButton';
+import RNTesterText from '../../components/RNTesterText';
+import {RNTesterThemeContext} from '../../components/RNTesterTheme';
+import RNTOption from '../../components/RNTOption';
+import * as React from 'react';
+import {useCallback, useContext, useState} from 'react';
+import {Modal, Platform, StyleSheet, Switch, Text, View} from 'react-native';
 
 const animationTypes = ['slide', 'none', 'fade'];
 const presentationStyles = [
@@ -32,180 +28,291 @@ const presentationStyles = [
   'formSheet',
   'overFullScreen',
 ];
-const iOSActions = ['None', 'On Dismiss', 'On Show'];
-const noniOSActions = ['None', 'On Show'];
+const supportedOrientations = [
+  'portrait',
+  'portrait-upside-down',
+  'landscape',
+  'landscape-left',
+  'landscape-right',
+];
+
+const backdropColors = ['red', 'blue', undefined];
 
 function ModalPresentation() {
-  const [animationType, setAnimationType] = React.useState('none');
-  const [transparent, setTransparent] = React.useState(false);
-  const [visible, setVisible] = React.useState(false);
-  const [hardwareAccelerated, setHardwareAccelerated] = React.useState(false);
-  const [statusBarTranslucent, setStatusBarTranslucent] = React.useState(false);
-  const [presentationStyle, setPresentationStyle] =
-    React.useState('fullScreen');
-  const [supportedOrientationKey, setSupportedOrientationKey] =
-    React.useState('Portrait');
-  const [currentOrientation, setCurrentOrientation] = React.useState('unknown');
-  const [action, setAction] = React.useState('None');
-  const actions = Platform.OS === 'ios' ? iOSActions : noniOSActions;
-  const onDismiss = () => {
-    setVisible(false);
-    if (action === 'onDismiss') {
-      alert('onDismiss');
-    }
-  };
+  const onDismiss = useCallback(() => {
+    alert('onDismiss');
+  }, []);
 
-  const onShow = () => {
-    if (action === 'onShow') {
-      alert('onShow');
-    }
-  };
-  const onOrientationChange = event =>
+  const onShow = useCallback(() => {
+    alert('onShow');
+  }, []);
+
+  const onRequestClose = useCallback(() => {
+    console.log('onRequestClose');
+  }, []);
+
+  const [props, setProps] = useState<ModalProps>({
+    animationType: 'none',
+    transparent: false,
+    hardwareAccelerated: false,
+    statusBarTranslucent: false,
+    navigationBarTranslucent: false,
+    presentationStyle: Platform.select({
+      ios: 'fullScreen',
+      default: undefined,
+    }),
+    supportedOrientations: Platform.select({
+      ios: ['portrait'],
+      default: undefined,
+    }),
+    onDismiss: undefined,
+    onShow: undefined,
+    visible: false,
+    backdropColor: undefined,
+  });
+  const presentationStyle = props.presentationStyle;
+  const hardwareAccelerated = props.hardwareAccelerated;
+  const statusBarTranslucent = props.statusBarTranslucent;
+  const navigationBarTranslucent = props.navigationBarTranslucent;
+  const backdropColor = props.backdropColor;
+  const backgroundColor = useContext(RNTesterThemeContext).BackgroundColor;
+
+  const [currentOrientation, setCurrentOrientation] = useState('unknown');
+
+  type OrientationChangeEvent = Parameters<
+    $NonMaybeType<React.PropsOf<Modal>['onOrientationChange']>,
+  >[0];
+  const onOrientationChange = (event: OrientationChangeEvent) =>
     setCurrentOrientation(event.nativeEvent.orientation);
-  const modalBackgroundStyle = {
-    backgroundColor: transparent ? 'rgba(0, 0, 0, 0.5)' : '#f5fcff',
-  };
-  const innerContainerTransparentStyle = transparent
-    ? {backgroundColor: '#fff', padding: 20}
-    : null;
+
+  const controls = (
+    <>
+      <View style={styles.inlineBlock}>
+        <RNTesterText style={styles.title}>
+          Status Bar Translucent 🟢
+        </RNTesterText>
+        <Switch
+          value={statusBarTranslucent}
+          onValueChange={enabled =>
+            setProps(prev => ({
+              ...prev,
+              statusBarTranslucent: enabled,
+              navigationBarTranslucent: false,
+            }))
+          }
+        />
+      </View>
+      <View style={styles.inlineBlock}>
+        <RNTesterText style={styles.title}>
+          Navigation Bar Translucent 🟢
+        </RNTesterText>
+        <Switch
+          value={navigationBarTranslucent}
+          onValueChange={enabled => {
+            setProps(prev => ({
+              ...prev,
+              statusBarTranslucent: enabled,
+              navigationBarTranslucent: enabled,
+            }));
+          }}
+        />
+      </View>
+      <View style={styles.inlineBlock}>
+        <RNTesterText style={styles.title}>
+          Hardware Acceleration 🟢
+        </RNTesterText>
+        <Switch
+          value={hardwareAccelerated}
+          onValueChange={enabled =>
+            setProps(prev => ({
+              ...prev,
+              hardwareAccelerated: enabled,
+            }))
+          }
+        />
+      </View>
+      <View style={styles.block}>
+        <RNTesterText style={styles.title}>Presentation Style ⚫️</RNTesterText>
+        <View style={styles.row}>
+          {presentationStyles.map(type => (
+            <RNTOption
+              key={type}
+              disabled={Platform.OS !== 'ios'}
+              style={styles.option}
+              label={type}
+              multiSelect={true}
+              onPress={() =>
+                setProps(prev => {
+                  if (type === 'overFullScreen' && prev.transparent === true) {
+                    return {
+                      ...prev,
+                      presentationStyle: type,
+                      transparent: false,
+                    };
+                  }
+                  return {
+                    ...prev,
+                    presentationStyle:
+                      type === prev.presentationStyle ? undefined : type,
+                  };
+                })
+              }
+              selected={type === presentationStyle}
+            />
+          ))}
+        </View>
+      </View>
+      <View style={styles.block}>
+        <View style={styles.rowWithSpaceBetween}>
+          <RNTesterText style={styles.title}>Transparent</RNTesterText>
+          <Switch
+            value={props.transparent}
+            onValueChange={enabled =>
+              setProps(prev => ({...prev, transparent: enabled}))
+            }
+          />
+        </View>
+        {Platform.OS === 'ios' && presentationStyle !== 'overFullScreen' ? (
+          <RNTesterText style={styles.warning}>
+            iOS Modal can only be transparent with 'overFullScreen' Presentation
+            Style
+          </RNTesterText>
+        ) : null}
+      </View>
+      <View style={styles.block}>
+        <RNTesterText style={styles.title}>
+          Supported Orientation ⚫️
+        </RNTesterText>
+        <View style={styles.row}>
+          {supportedOrientations.map(orientation => (
+            <RNTOption
+              key={orientation}
+              disabled={Platform.OS !== 'ios'}
+              style={styles.option}
+              label={orientation}
+              multiSelect={true}
+              onPress={() =>
+                setProps(prev => {
+                  if (prev.supportedOrientations?.includes(orientation)) {
+                    return {
+                      ...prev,
+                      supportedOrientations: prev.supportedOrientations?.filter(
+                        o => o !== orientation,
+                      ),
+                    };
+                  }
+                  return {
+                    ...prev,
+                    supportedOrientations: [
+                      ...(prev.supportedOrientations ?? []),
+                      orientation,
+                    ],
+                  };
+                })
+              }
+              selected={props.supportedOrientations?.includes(orientation)}
+            />
+          ))}
+        </View>
+      </View>
+      <View style={styles.block}>
+        <RNTesterText style={styles.title}>Actions</RNTesterText>
+        <View style={styles.row}>
+          <RNTOption
+            key="onShow"
+            style={styles.option}
+            label="onShow"
+            multiSelect={true}
+            onPress={() =>
+              setProps(prev => ({
+                ...prev,
+                onShow: prev.onShow ? undefined : onShow,
+              }))
+            }
+            selected={!!props.onShow}
+          />
+          <RNTOption
+            key="onDismiss"
+            style={styles.option}
+            label="onDismiss ⚫️"
+            disabled={Platform.OS !== 'ios'}
+            onPress={() =>
+              setProps(prev => ({
+                ...prev,
+                onDismiss: prev.onDismiss ? undefined : onDismiss,
+              }))
+            }
+            selected={!!props.onDismiss}
+          />
+        </View>
+      </View>
+      <View style={styles.block}>
+        <RNTesterText style={styles.title}>Backdrop Color ⚫️</RNTesterText>
+        <View style={styles.row}>
+          {backdropColors.map(type => (
+            <RNTOption
+              key={type ?? 'default'}
+              style={styles.option}
+              label={type ?? 'default'}
+              multiSelect={true}
+              onPress={() =>
+                setProps(prev => ({
+                  ...prev,
+                  backdropColor: type,
+                }))
+              }
+              selected={type === backdropColor}
+            />
+          ))}
+        </View>
+      </View>
+    </>
+  );
+
   return (
     <View>
-      <RNTesterButton onPress={() => setVisible(true)}>
+      <RNTesterButton
+        onPress={() => setProps(prev => ({...prev, visible: true}))}>
         Show Modal
       </RNTesterButton>
       <Modal
-        animationType={animationType}
-        presentationStyle={presentationStyle}
-        transparent={transparent}
-        hardwareAccelerated={hardwareAccelerated}
-        statusBarTranslucent={statusBarTranslucent}
-        visible={visible}
-        onRequestClose={onDismiss}
-        supportedOrientations={supportedOrientations[supportedOrientationKey]}
-        onOrientationChange={onOrientationChange}
-        onDismiss={onDismiss}
-        onShow={onShow}>
-        <View style={[styles.modalContainer, modalBackgroundStyle]}>
-          <View
-            style={[
-              styles.modalInnerContainer,
-              innerContainerTransparentStyle,
-            ]}>
-            <Text>
-              This modal was presented with animationType: '{animationType}'
+        {...props}
+        onRequestClose={onRequestClose}
+        onOrientationChange={onOrientationChange}>
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalInnerContainer, {backgroundColor}]}>
+            <Text testID="modal_animationType_text">
+              This modal was presented with animationType: '
+              {props.animationType}'
             </Text>
             {Platform.OS === 'ios' ? (
               <Text>
                 It is currently displayed in {currentOrientation} mode.
               </Text>
             ) : null}
-            <RNTesterButton onPress={onDismiss}>Close</RNTesterButton>
+            <RNTesterButton
+              onPress={() => setProps(prev => ({...prev, visible: false}))}>
+              Close
+            </RNTesterButton>
+            {controls}
           </View>
         </View>
       </Modal>
       <View style={styles.block}>
-        <Text style={styles.title}>Animation Type</Text>
+        <RNTesterText style={styles.title}>Animation Type</RNTesterText>
         <View style={styles.row}>
           {animationTypes.map(type => (
             <RNTOption
               key={type}
               style={styles.option}
               label={type}
-              onPress={() => setAnimationType(type)}
-              selected={type === animationType}
+              onPress={() => setProps(prev => ({...prev, animationType: type}))}
+              selected={type === props.animationType}
             />
           ))}
         </View>
       </View>
-      {Platform.OS === 'android' && Platform.isTV !== true ? (
-        <>
-          <View style={styles.inlineBlock}>
-            <Text style={styles.title}>Status Bar Translucent</Text>
-            <Switch
-              value={statusBarTranslucent}
-              onValueChange={() =>
-                setStatusBarTranslucent(!statusBarTranslucent)
-              }
-            />
-          </View>
-          <View style={styles.inlineBlock}>
-            <Text style={styles.title}>Hardware Acceleration</Text>
-            <Switch
-              value={hardwareAccelerated}
-              onValueChange={() => setHardwareAccelerated(!hardwareAccelerated)}
-            />
-          </View>
-        </>
-      ) : null}
-      {Platform.isTV !== true ? (
-        <>
-          {Platform.OS === 'ios' ? (
-            <View style={styles.block}>
-              <Text style={styles.title}>Presentation Style</Text>
-              <View style={styles.row}>
-                {presentationStyles.map(type => (
-                  <RNTOption
-                    key={type}
-                    style={styles.option}
-                    label={type}
-                    onPress={() => {
-                      if (type !== 'overFullScreen' && transparent) {
-                        setTransparent(false);
-                      }
-                      setPresentationStyle(type);
-                    }}
-                    selected={type === presentationStyle}
-                  />
-                ))}
-              </View>
-            </View>
-          ) : null}
-          <View style={styles.block}>
-            <View style={styles.rowWithSpaceBetween}>
-              <Text style={styles.title}>Transparent</Text>
-              <Switch
-                value={transparent}
-                disabled={presentationStyle !== 'overFullScreen'}
-                onValueChange={() => setTransparent(!transparent)}
-              />
-            </View>
-            {Platform.OS === 'ios' && presentationStyle !== 'overFullScreen' ? (
-              <Text style={styles.warning}>
-                iOS Modal can only be transparent with 'overFullScreen'
-                Presentation Style
-              </Text>
-            ) : null}
-          </View>
-          <View style={styles.block}>
-            <Text style={styles.title}>Supported Orientation</Text>
-            <View style={styles.row}>
-              {Object.keys(supportedOrientations).map(label => (
-                <RNTOption
-                  key={label}
-                  style={styles.option}
-                  label={label}
-                  onPress={() => setSupportedOrientationKey(label)}
-                  selected={label === supportedOrientationKey}
-                />
-              ))}
-            </View>
-          </View>
-          <View style={styles.block}>
-            <Text style={styles.title}>Actions</Text>
-            <View style={styles.row}>
-              {actions.map(value => (
-                <RNTOption
-                  key={value}
-                  style={styles.option}
-                  label={value}
-                  onPress={() => setAction(value)}
-                  selected={value === action}
-                />
-              ))}
-            </View>
-          </View>
-        </>
-      ) : null}
+      {controls}
     </View>
   );
 }
@@ -247,7 +354,7 @@ const styles = StyleSheet.create({
   },
   modalInnerContainer: {
     borderRadius: 10,
-    alignItems: 'center',
+    padding: 10,
   },
   warning: {
     margin: 3,

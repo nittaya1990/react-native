@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -9,11 +9,12 @@
  */
 
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
-import * as React from 'react';
-import RNTesterButton from '../../components/RNTesterButton';
-import {Text, StyleSheet, View, Animated} from 'react-native';
+
 import RNTConfigurationBlock from '../../components/RNTConfigurationBlock';
+import RNTesterButton from '../../components/RNTesterButton';
 import ToggleNativeDriver from './utils/ToggleNativeDriver';
+import * as React from 'react';
+import {Animated, StyleSheet, Text, View} from 'react-native';
 const containerWidth = 200;
 const boxSize = 50;
 
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
   },
 });
 
-type Props = $ReadOnly<{||}>;
+type Props = $ReadOnly<{}>;
 
 function MovingBoxView({useNativeDriver}: {useNativeDriver: boolean}) {
   const x = React.useRef(new Animated.Value(0));

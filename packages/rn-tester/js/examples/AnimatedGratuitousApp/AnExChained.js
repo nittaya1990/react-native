@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,12 +10,11 @@
 
 'use strict';
 
-import type {PressEvent} from 'react-native/Libraries/Types/CoreEventTypes';
 import type {GestureState} from 'react-native/Libraries/Interaction/PanResponder';
+import type {PressEvent} from 'react-native/Libraries/Types/CoreEventTypes';
 
-const React = require('react');
-
-const {Animated, PanResponder, StyleSheet, View} = require('react-native');
+import React from 'react';
+import {Animated, PanResponder, StyleSheet, View} from 'react-native';
 
 class AnExChained extends React.Component<Object, any> {
   constructor(props: Object) {
@@ -120,4 +119,4 @@ const CHAIN_IMGS = [
   require('../../assets/bunny.png'),
 ];
 
-module.exports = AnExChained;
+export default AnExChained;

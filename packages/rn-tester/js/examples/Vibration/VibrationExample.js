@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,16 +10,15 @@
 
 'use strict';
 
-const React = require('react');
-
-const {
+import RNTesterText from '../../components/RNTesterText';
+import React from 'react';
+import {
+  Platform,
   StyleSheet,
-  View,
-  Text,
   TouchableHighlight,
   Vibration,
-  Platform,
-} = require('react-native');
+  View,
+} from 'react-native';
 
 exports.framework = 'React';
 exports.title = 'Vibration';
@@ -54,7 +53,7 @@ exports.examples = [
     render(): React.Node {
       return (
         <View style={styles.wrapper}>
-          <Text>{patternDescription}</Text>
+          <RNTesterText>{patternDescription}</RNTesterText>
         </View>
       );
     },
@@ -67,7 +66,7 @@ exports.examples = [
           style={styles.wrapper}
           onPress={() => Vibration.vibrate()}>
           <View style={styles.button}>
-            <Text>Vibrate</Text>
+            <RNTesterText style={styles.buttonText}>Vibrate</RNTesterText>
           </View>
         </TouchableHighlight>
       );
@@ -81,7 +80,7 @@ exports.examples = [
           style={styles.wrapper}
           onPress={() => Vibration.vibrate(pattern)}>
           <View style={styles.button}>
-            <Text>Vibrate once</Text>
+            <RNTesterText style={styles.buttonText}>Vibrate once</RNTesterText>
           </View>
         </TouchableHighlight>
       );
@@ -95,7 +94,9 @@ exports.examples = [
           style={styles.wrapper}
           onPress={() => Vibration.vibrate(pattern, true)}>
           <View style={styles.button}>
-            <Text>Vibrate until cancel</Text>
+            <RNTesterText style={styles.buttonText}>
+              Vibrate until cancel
+            </RNTesterText>
           </View>
         </TouchableHighlight>
       );
@@ -109,7 +110,7 @@ exports.examples = [
           style={styles.wrapper}
           onPress={() => Vibration.cancel()}>
           <View style={styles.button}>
-            <Text>Cancel</Text>
+            <RNTesterText style={styles.buttonText}>Cancel</RNTesterText>
           </View>
         </TouchableHighlight>
       );
@@ -125,5 +126,8 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#eeeeee',
     padding: 10,
+  },
+  buttonText: {
+    color: 'black',
   },
 });

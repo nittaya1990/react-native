@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,12 +10,9 @@
 
 'use strict';
 
-import type {RenderItemProps} from 'react-native/Libraries/Lists/VirtualizedList';
+import type {Item} from '../../components/ListExampleShared';
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
-const RNTesterPage = require('../../components/RNTesterPage');
-const React = require('react');
-
-const infoLog = require('react-native/Libraries/Utilities/infoLog');
+import type {RenderItemProps} from 'react-native/Libraries/Lists/VirtualizedList';
 
 const {
   FooterComponent,
@@ -23,14 +20,15 @@ const {
   ItemComponent,
   PlainInput,
   SeparatorComponent,
-  genItemData,
+  genNewerItems,
   getItemLayout,
   pressItem,
   renderSmallSwitchOption,
 } = require('../../components/ListExampleShared');
-const {FlatList, StyleSheet, Text, View, Alert} = require('react-native');
-
-import type {Item} from '../../components/ListExampleShared';
+const RNTesterPage = require('../../components/RNTesterPage');
+const React = require('react');
+const {Alert, FlatList, StyleSheet, Text, View} = require('react-native');
+const infoLog = require('react-native/Libraries/Utilities/infoLog');
 
 class MultiColumnExample extends React.PureComponent<
   $FlowFixMeProps,
@@ -38,21 +36,23 @@ class MultiColumnExample extends React.PureComponent<
 > {
   state:
     | any
-    | {|
+    | {
         data: Array<Item>,
         filterText: string,
         fixedHeight: boolean,
         logViewable: boolean,
         numColumns: number,
         virtualized: boolean,
-      |} = {
-    data: genItemData(1000),
+      } = {
+    data: genNewerItems(1000),
     filterText: '',
     fixedHeight: true,
     logViewable: false,
     numColumns: 2,
     virtualized: true,
   };
+  /* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
+   * LTI update could not be added via codemod */
   _onChangeFilterText = filterText => {
     this.setState(() => ({filterText}));
   };
@@ -71,7 +71,6 @@ class MultiColumnExample extends React.PureComponent<
     return (
       <RNTesterPage
         title={this.props.navigator ? null : '<FlatList> - MultiColumn'}
-        noSpacer={true}
         noScroll={true}>
         <View style={styles.searchRow}>
           <View style={styles.row}>
@@ -140,7 +139,7 @@ class MultiColumnExample extends React.PureComponent<
       getItemLayout(data, index).length + 2 * (CARD_MARGIN + BORDER_WIDTH);
     return {length, offset: length * index, index};
   }
-  _renderItemComponent = ({item}: RenderItemProps<any | Item>) => {
+  _renderItemComponent = ({item}: RenderItemProps<any | Item>): $FlowFixMe => {
     return (
       <View style={styles.card}>
         <ItemComponent

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -37,13 +37,23 @@ export type Int32TypeAnnotation = $ReadOnly<{
   type: 'Int32TypeAnnotation',
 }>;
 
+export type NumberLiteralTypeAnnotation = $ReadOnly<{
+  type: 'NumberLiteralTypeAnnotation',
+  value: number,
+}>;
+
 export type StringTypeAnnotation = $ReadOnly<{
   type: 'StringTypeAnnotation',
 }>;
 
-export type StringEnumTypeAnnotation = $ReadOnly<{
-  type: 'StringEnumTypeAnnotation',
-  options: $ReadOnlyArray<string>,
+export type StringLiteralTypeAnnotation = $ReadOnly<{
+  type: 'StringLiteralTypeAnnotation',
+  value: string,
+}>;
+
+export type StringLiteralUnionTypeAnnotation = $ReadOnly<{
+  type: 'StringLiteralUnionTypeAnnotation',
+  types: $ReadOnlyArray<StringLiteralTypeAnnotation>,
 }>;
 
 export type VoidTypeAnnotation = $ReadOnly<{
@@ -53,6 +63,17 @@ export type VoidTypeAnnotation = $ReadOnly<{
 export type ObjectTypeAnnotation<+T> = $ReadOnly<{
   type: 'ObjectTypeAnnotation',
   properties: $ReadOnlyArray<NamedShape<T>>,
+  // metadata for objects that generated from interfaces
+  baseTypes?: $ReadOnlyArray<string>,
+}>;
+
+export type MixedTypeAnnotation = $ReadOnly<{
+  type: 'MixedTypeAnnotation',
+}>;
+
+export type EventEmitterTypeAnnotation = $ReadOnly<{
+  type: 'EventEmitterTypeAnnotation',
+  typeAnnotation: NativeModuleEventEmitterTypeAnnotation | $FlowFixMe,
 }>;
 
 type FunctionTypeAnnotation<+P, +R> = $ReadOnly<{
@@ -84,14 +105,11 @@ export type ComponentShape = $ReadOnly<{
 
 export type OptionsShape = $ReadOnly<{
   interfaceOnly?: boolean,
-
   // Use for components with no current paper rename in progress
   // Does not check for new name
   paperComponentName?: string,
-
   // Use for components that are not used on other platforms.
   excludedPlatforms?: $ReadOnlyArray<PlatformType>,
-
   // Use for components currently being renamed in paper
   // Will use new name if it is available and fallback to this name
   paperComponentNameDeprecated?: string,
@@ -119,8 +137,44 @@ export type EventTypeAnnotation =
   | DoubleTypeAnnotation
   | FloatTypeAnnotation
   | Int32TypeAnnotation
-  | StringEnumTypeAnnotation
-  | ObjectTypeAnnotation<EventTypeAnnotation>;
+  | MixedTypeAnnotation
+  | StringLiteralUnionTypeAnnotation
+  | ObjectTypeAnnotation<EventTypeAnnotation>
+  | ArrayTypeAnnotation<EventTypeAnnotation>;
+
+export type ComponentArrayTypeAnnotation = ArrayTypeAnnotation<
+  | BooleanTypeAnnotation
+  | StringTypeAnnotation
+  | DoubleTypeAnnotation
+  | FloatTypeAnnotation
+  | Int32TypeAnnotation
+  | $ReadOnly<{
+      type: 'StringEnumTypeAnnotation',
+      default: string,
+      options: $ReadOnlyArray<string>,
+    }>
+  | ObjectTypeAnnotation<PropTypeAnnotation>
+  | ReservedPropTypeAnnotation
+  | ArrayTypeAnnotation<ObjectTypeAnnotation<PropTypeAnnotation>>,
+>;
+
+export type ComponentCommandArrayTypeAnnotation = ArrayTypeAnnotation<
+  | BooleanTypeAnnotation
+  | StringTypeAnnotation
+  | DoubleTypeAnnotation
+  | FloatTypeAnnotation
+  | Int32TypeAnnotation
+  // Mixed is not great. This generally means its a type alias to another type
+  // like an object or union. Ideally we'd encode that type in the schema so the compat-check can
+  // validate those deeper objects for breaking changes and the generators can do something smarter.
+  // As of now, the generators just create ReadableMap or (const NSArray *) which are untyped
+  | MixedTypeAnnotation,
+>;
+
+export type ArrayTypeAnnotation<+T> = $ReadOnly<{
+  type: 'ArrayTypeAnnotation',
+  elementType: T,
+}>;
 
 export type PropTypeAnnotation =
   | $ReadOnly<{
@@ -155,26 +209,8 @@ export type PropTypeAnnotation =
     }>
   | ReservedPropTypeAnnotation
   | ObjectTypeAnnotation<PropTypeAnnotation>
-  | $ReadOnly<{
-      type: 'ArrayTypeAnnotation',
-      elementType:
-        | BooleanTypeAnnotation
-        | StringTypeAnnotation
-        | DoubleTypeAnnotation
-        | FloatTypeAnnotation
-        | Int32TypeAnnotation
-        | $ReadOnly<{
-            type: 'StringEnumTypeAnnotation',
-            default: string,
-            options: $ReadOnlyArray<string>,
-          }>
-        | ObjectTypeAnnotation<PropTypeAnnotation>
-        | ReservedPropTypeAnnotation
-        | $ReadOnly<{
-            type: 'ArrayTypeAnnotation',
-            elementType: ObjectTypeAnnotation<PropTypeAnnotation>,
-          }>,
-    }>;
+  | ComponentArrayTypeAnnotation
+  | MixedTypeAnnotation;
 
 export type ReservedPropTypeAnnotation = $ReadOnly<{
   type: 'ReservedPropTypeAnnotation',
@@ -182,7 +218,9 @@ export type ReservedPropTypeAnnotation = $ReadOnly<{
     | 'ColorPrimitive'
     | 'ImageSourcePrimitive'
     | 'PointPrimitive'
-    | 'EdgeInsetsPrimitive',
+    | 'EdgeInsetsPrimitive'
+    | 'ImageRequestPrimitive'
+    | 'DimensionPrimitive',
 }>;
 
 export type CommandTypeAnnotation = FunctionTypeAnnotation<
@@ -196,7 +234,8 @@ export type CommandParamTypeAnnotation =
   | Int32TypeAnnotation
   | DoubleTypeAnnotation
   | FloatTypeAnnotation
-  | StringTypeAnnotation;
+  | StringTypeAnnotation
+  | ComponentCommandArrayTypeAnnotation;
 
 export type ReservedTypeAnnotation = $ReadOnly<{
   type: 'ReservedTypeAnnotation',
@@ -217,9 +256,10 @@ export type NullableTypeAnnotation<+T: NativeModuleTypeAnnotation> = $ReadOnly<{
 
 export type NativeModuleSchema = $ReadOnly<{
   type: 'NativeModule',
-  aliases: NativeModuleAliasMap,
+  aliasMap: NativeModuleAliasMap,
+  enumMap: NativeModuleEnumMap,
   spec: NativeModuleSpec,
-  moduleNames: $ReadOnlyArray<string>,
+  moduleName: string,
   // Use for modules that are not used on other platforms.
   // TODO: It's clearer to define `restrictedToPlatforms` instead, but
   // `excludedPlatforms` is used here to be consistent with ComponentSchema.
@@ -227,12 +267,20 @@ export type NativeModuleSchema = $ReadOnly<{
 }>;
 
 type NativeModuleSpec = $ReadOnly<{
-  properties: $ReadOnlyArray<NativeModulePropertyShape>,
+  eventEmitters: $ReadOnlyArray<NativeModuleEventEmitterShape>,
+  methods: $ReadOnlyArray<NativeModulePropertyShape>,
 }>;
+
+export type NativeModuleEventEmitterShape =
+  NamedShape<EventEmitterTypeAnnotation>;
 
 export type NativeModulePropertyShape = NamedShape<
   Nullable<NativeModuleFunctionTypeAnnotation>,
 >;
+
+export type NativeModuleEnumMap = $ReadOnly<{
+  [enumName: string]: NativeModuleEnumDeclarationWithMembers,
+}>;
 
 export type NativeModuleAliasMap = $ReadOnly<{
   [aliasName: string]: NativeModuleObjectTypeAnnotation,
@@ -249,41 +297,51 @@ export type NativeModuleObjectTypeAnnotation = ObjectTypeAnnotation<
 
 export type NativeModuleArrayTypeAnnotation<
   +T: Nullable<NativeModuleBaseTypeAnnotation>,
-> = $ReadOnly<{
-  type: 'ArrayTypeAnnotation',
+> = ArrayTypeAnnotation<
+  | T
   /**
    * TODO(T72031674): Migrate all our NativeModule specs to not use
    * invalid Array ElementTypes. Then, make the elementType required.
    */
-  elementType?: T,
-}>;
+  | UnsafeAnyTypeAnnotation,
+>;
 
-export type NativeModuleStringTypeAnnotation = $ReadOnly<{
-  type: 'StringTypeAnnotation',
-}>;
+export type UnsafeAnyTypeAnnotation = {
+  type: 'AnyTypeAnnotation',
+};
 
 export type NativeModuleNumberTypeAnnotation = $ReadOnly<{
   type: 'NumberTypeAnnotation',
 }>;
 
-export type NativeModuleInt32TypeAnnotation = $ReadOnly<{
-  type: 'Int32TypeAnnotation',
+export type NativeModuleEnumMember = {
+  name: string,
+  value: StringLiteralTypeAnnotation | NumberLiteralTypeAnnotation,
+};
+
+export type NativeModuleEnumMemberType =
+  | 'NumberTypeAnnotation'
+  | 'StringTypeAnnotation';
+
+export type NativeModuleEnumDeclaration = $ReadOnly<{
+  name: string,
+  type: 'EnumDeclaration',
+  memberType: NativeModuleEnumMemberType,
 }>;
 
-export type NativeModuleDoubleTypeAnnotation = $ReadOnly<{
-  type: 'DoubleTypeAnnotation',
-}>;
-
-export type NativeModuleFloatTypeAnnotation = $ReadOnly<{
-  type: 'FloatTypeAnnotation',
-}>;
-
-export type NativeModuleBooleanTypeAnnotation = $ReadOnly<{
-  type: 'BooleanTypeAnnotation',
-}>;
+export type NativeModuleEnumDeclarationWithMembers = {
+  name: string,
+  type: 'EnumDeclarationWithMembers',
+  memberType: NativeModuleEnumMemberType,
+  members: $ReadOnlyArray<NativeModuleEnumMember>,
+};
 
 export type NativeModuleGenericObjectTypeAnnotation = $ReadOnly<{
   type: 'GenericObjectTypeAnnotation',
+  // a dictionary type is codegen as "Object"
+  // but we know all its members are in the same type
+  // when it happens, the following field is non-null
+  dictionaryValueType?: Nullable<NativeModuleTypeAnnotation>,
 }>;
 
 export type NativeModuleTypeAliasTypeAnnotation = $ReadOnly<{
@@ -293,20 +351,59 @@ export type NativeModuleTypeAliasTypeAnnotation = $ReadOnly<{
 
 export type NativeModulePromiseTypeAnnotation = $ReadOnly<{
   type: 'PromiseTypeAnnotation',
+  elementType: VoidTypeAnnotation | Nullable<NativeModuleBaseTypeAnnotation>,
 }>;
 
-export type NativeModuleBaseTypeAnnotation =
-  | NativeModuleStringTypeAnnotation
+export type UnionTypeAnnotationMemberType =
+  | 'NumberTypeAnnotation'
+  | 'ObjectTypeAnnotation'
+  | 'StringTypeAnnotation';
+
+export type NativeModuleUnionTypeAnnotation = $ReadOnly<{
+  type: 'UnionTypeAnnotation',
+  memberType: UnionTypeAnnotationMemberType,
+}>;
+
+export type NativeModuleMixedTypeAnnotation = $ReadOnly<{
+  type: 'MixedTypeAnnotation',
+}>;
+
+type NativeModuleEventEmitterBaseTypeAnnotation =
+  | BooleanTypeAnnotation
+  | DoubleTypeAnnotation
+  | FloatTypeAnnotation
+  | Int32TypeAnnotation
   | NativeModuleNumberTypeAnnotation
-  | NativeModuleInt32TypeAnnotation
-  | NativeModuleDoubleTypeAnnotation
-  | NativeModuleFloatTypeAnnotation
-  | NativeModuleBooleanTypeAnnotation
+  | NumberLiteralTypeAnnotation
+  | StringTypeAnnotation
+  | StringLiteralTypeAnnotation
+  | StringLiteralUnionTypeAnnotation
+  | NativeModuleTypeAliasTypeAnnotation
+  | NativeModuleGenericObjectTypeAnnotation
+  | VoidTypeAnnotation;
+
+export type NativeModuleEventEmitterTypeAnnotation =
+  | NativeModuleEventEmitterBaseTypeAnnotation
+  | ArrayTypeAnnotation<NativeModuleEventEmitterBaseTypeAnnotation>;
+
+export type NativeModuleBaseTypeAnnotation =
+  | StringTypeAnnotation
+  | StringLiteralTypeAnnotation
+  | StringLiteralUnionTypeAnnotation
+  | NativeModuleNumberTypeAnnotation
+  | NumberLiteralTypeAnnotation
+  | Int32TypeAnnotation
+  | DoubleTypeAnnotation
+  | FloatTypeAnnotation
+  | BooleanTypeAnnotation
+  | NativeModuleEnumDeclaration
   | NativeModuleGenericObjectTypeAnnotation
   | ReservedTypeAnnotation
   | NativeModuleTypeAliasTypeAnnotation
   | NativeModuleArrayTypeAnnotation<Nullable<NativeModuleBaseTypeAnnotation>>
-  | NativeModuleObjectTypeAnnotation;
+  | NativeModuleObjectTypeAnnotation
+  | NativeModuleUnionTypeAnnotation
+  | NativeModuleMixedTypeAnnotation;
 
 export type NativeModuleParamTypeAnnotation =
   | NativeModuleBaseTypeAnnotation
@@ -319,9 +416,34 @@ export type NativeModuleReturnTypeAnnotation =
 export type NativeModuleTypeAnnotation =
   | NativeModuleBaseTypeAnnotation
   | NativeModuleParamOnlyTypeAnnotation
-  | NativeModuleReturnOnlyTypeAnnotation;
+  | NativeModuleReturnOnlyTypeAnnotation
+  | NativeModuleEventEmitterTypeAnnotation;
 
 type NativeModuleParamOnlyTypeAnnotation = NativeModuleFunctionTypeAnnotation;
+
 type NativeModuleReturnOnlyTypeAnnotation =
   | NativeModulePromiseTypeAnnotation
   | VoidTypeAnnotation;
+
+// Add the allowed component reserved types to the native module union
+export type CompleteReservedTypeAnnotation =
+  | ReservedTypeAnnotation
+  | {
+      type: 'ReservedTypeAnnotation',
+      name: ReservedPropTypeAnnotation['name'],
+    };
+
+// Used by compatibility check which needs to handle all possible types
+// This will eventually also include the union of all view manager types
+export type CompleteTypeAnnotation =
+  | NativeModuleTypeAnnotation
+  | NativeModuleFunctionTypeAnnotation
+  | NullableTypeAnnotation<NativeModuleTypeAnnotation>
+  | EventEmitterTypeAnnotation
+  | NativeModuleEnumDeclarationWithMembers
+  | UnsafeAnyTypeAnnotation
+  | ArrayTypeAnnotation<CompleteTypeAnnotation>
+  | ObjectTypeAnnotation<CompleteTypeAnnotation>
+  // Components
+  | CommandTypeAnnotation
+  | CompleteReservedTypeAnnotation;

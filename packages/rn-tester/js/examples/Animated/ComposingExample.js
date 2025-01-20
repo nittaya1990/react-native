@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -11,20 +11,22 @@
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
 import type {CompositeAnimation} from 'react-native/Libraries/Animated/AnimatedMock';
 import type AnimatedValue from 'react-native/Libraries/Animated/nodes/AnimatedValue';
-import * as React from 'react';
-import RNTesterButton from '../../components/RNTesterButton';
-import ToggleNativeDriver from './utils/ToggleNativeDriver';
+
 import RNTConfigurationBlock from '../../components/RNTConfigurationBlock';
+import RNTesterButton from '../../components/RNTesterButton';
+import {RNTesterThemeContext} from '../../components/RNTesterTheme';
+import ToggleNativeDriver from './utils/ToggleNativeDriver';
+import * as React from 'react';
 import {
-  Text,
-  StyleSheet,
-  View,
   Animated,
   FlatList,
+  StyleSheet,
+  Text,
+  View,
   useWindowDimensions,
 } from 'react-native';
 
-type Props = $ReadOnly<{||}>;
+type Props = $ReadOnly<{}>;
 const boxSize = 12;
 const padding = 8;
 const leftToRightTimingConfig = (useNativeDriver: boolean) => ({
@@ -151,16 +153,19 @@ function ComposingExampleItem({
   const animation = React.useRef(
     compositeAnimation(xTranslations.current, useNativeDriver),
   );
+  const theme = React.useContext(RNTesterThemeContext);
 
   return (
     <View style={styles.itemContainer}>
-      <Text style={styles.itemTitle}>{title}</Text>
-      <Text>{description}</Text>
+      <Text style={[styles.itemTitle, {color: theme.SecondaryLabelColor}]}>
+        {title}
+      </Text>
+      <Text style={{color: theme.SecondaryLabelColor}}>{description}</Text>
       <View style={styles.boxesContainer}>
         {boxIndexes.map(boxIndex => {
           const translateX = xTranslations.current[boxIndex].interpolate({
             inputRange: [0, 1],
-            outputRange: ([0, maxXTranslation]: [number, number]),
+            outputRange: [0, maxXTranslation],
           });
 
           return (

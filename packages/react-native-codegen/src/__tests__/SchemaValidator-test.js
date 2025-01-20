@@ -1,20 +1,20 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @emails oncall+react_native
  * @flow strict-local
  * @format
+ * @oncall react_native
  */
 
 'use strict';
 
+import type {SchemaType} from '../CodegenSchema.js';
+
 const fixtures = require('../generators/components/__test_fixtures__/fixtures.js');
 const schemaValidator = require('../SchemaValidator.js');
-
-import type {SchemaType} from '../CodegenSchema.js';
 
 const simpleProp = {
   name: 'disabled',

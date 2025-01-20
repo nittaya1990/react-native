@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -9,10 +9,12 @@
  */
 
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
-import * as React from 'react';
-import RNTesterButton from '../../components/RNTesterButton';
-import {Text, Easing, StyleSheet, View, Animated} from 'react-native';
+
 import RNTConfigurationBlock from '../../components/RNTConfigurationBlock';
+import RNTesterButton from '../../components/RNTesterButton';
+import {RNTesterThemeContext} from '../../components/RNTesterTheme';
+import * as React from 'react';
+import {Animated, Easing, StyleSheet, Text, View} from 'react-native';
 
 const styles = StyleSheet.create({
   content: {
@@ -28,11 +30,14 @@ const styles = StyleSheet.create({
 
 function CompositeAnimationsWithEasingExample(): React.Node {
   const anims = [1, 2, 3].map(() => new Animated.Value(0));
+  const theme = React.useContext(RNTesterThemeContext);
 
   return (
     <View>
       <RNTConfigurationBlock>
-        <Text>Note you cannot `useNativeDriver` for layout properties.</Text>
+        <Text style={{color: theme.SecondaryLabelColor}}>
+          Note you cannot `useNativeDriver` for layout properties.
+        </Text>
       </RNTConfigurationBlock>
       <RNTesterButton
         onPress={() => {
@@ -40,7 +45,6 @@ function CompositeAnimationsWithEasingExample(): React.Node {
             // One after the other
             Animated.timing(anims[0], {
               toValue: 200,
-              // $FlowFixMe[method-unbinding]
               easing: Easing.linear,
               useNativeDriver: false,
             }),
@@ -75,14 +79,12 @@ function CompositeAnimationsWithEasingExample(): React.Node {
             Animated.delay(400),
             Animated.parallel(
               [
-                // $FlowFixMe[method-unbinding]
                 Easing.inOut(Easing.quad), // Symmetric
                 Easing.back(1.5), // Goes backwards first
                 Easing.ease, // Default bezier
               ].map((easing, ii) =>
                 Animated.timing(anims[ii], {
                   toValue: 320,
-                  // $FlowFixMe[method-unbinding]
                   easing,
                   duration: 3000,
                   useNativeDriver: false,
@@ -97,7 +99,6 @@ function CompositeAnimationsWithEasingExample(): React.Node {
                   toValue: 0,
 
                   // Like a ball
-                  // $FlowFixMe[method-unbinding]
                   easing: Easing.bounce,
 
                   duration: 2000,

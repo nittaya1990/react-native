@@ -1,11 +1,11 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
  * @format
- * @flow
+ * @flow strict-local
  */
 
 'use strict';
@@ -43,11 +43,9 @@ export function SectionList_stickySectionHeadersEnabled(): React.Node {
 
 export default {
   title: 'SectionList Sticky Headers Enabled',
-  name: 'SectionList-stickyHeadersEnabled',
+  name: 'stickyHeadersEnabled',
   description: 'Toggle sticky headers on/off',
-  render: function (): React.Element<
-    typeof SectionList_stickySectionHeadersEnabled,
-  > {
+  render: function (): React.MixedElement {
     return <SectionList_stickySectionHeadersEnabled />;
   },
 };

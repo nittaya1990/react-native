@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -16,9 +16,8 @@
  * --jestBinary [path] - path to jest binary, defaults to local node modules
  * --yarnBinary [path] - path to yarn binary, defaults to yarn
  */
-/*eslint-disable no-undef */
-require('shelljs/global');
 
+const {echo, exec, exit} = require('shelljs');
 const argv = require('yargs').argv;
 
 const numberOfMaxWorkers = argv.maxWorkers || 1;
@@ -34,6 +33,13 @@ function describe(message) {
 try {
   echo('Executing JavaScript tests');
 
+  describe('Test: feature flags codegen');
+  if (exec(`${YARN_BINARY} run featureflags --verify-unchanged`).code) {
+    echo('Failed to run featureflags check.');
+    exitCode = 1;
+    throw Error(exitCode);
+  }
+
   describe('Test: eslint');
   if (exec(`${YARN_BINARY} run lint`).code) {
     echo('Failed to run eslint.');
@@ -41,18 +47,48 @@ try {
     throw Error(exitCode);
   }
 
-  describe('Test: Flow check (iOS)');
-  if (exec(`${YARN_BINARY} run flow-check-ios`).code) {
+  describe('Test: No JS build artifacts');
+  if (exec(`${YARN_BINARY} run build --check`).code) {
+    echo('Failed, there are build artifacts in this commit.');
+    exitCode = 1;
+    throw Error(exitCode);
+  }
+
+  describe('Test: Flow check');
+  if (exec(`${YARN_BINARY} run flow-check`).code) {
     echo('Failed to run flow.');
     exitCode = 1;
     throw Error(exitCode);
   }
-  describe('Test: Flow check (Android)');
-  if (exec(`${YARN_BINARY} run flow-check-android`).code) {
-    echo('Failed to run flow.');
+
+  /*
+   * Build @react-native/codegen and  @react-native/codegen-typescript-test
+   *
+   * The typescript-test project use TypeScript to write test cases
+   * In order to make these tests discoverable to jest
+   * *-test.ts must be compiled to *-test.js before running jest
+   */
+
+  describe('Test: Build @react-native/codegen');
+  if (
+    exec(`${YARN_BINARY} --cwd ./packages/react-native-codegen run build`).code
+  ) {
+    echo('Failed to build @react-native/codegen.');
     exitCode = 1;
     throw Error(exitCode);
   }
+  describe('Test: Build @react-native/codegen-typescript-test');
+  if (
+    exec(
+      `${YARN_BINARY} --cwd ./packages/react-native-codegen-typescript-test run build`,
+    ).code
+  ) {
+    echo('Failed to build @react-native/codegen-typescript-test.');
+    exitCode = 1;
+    throw Error(exitCode);
+  }
+
+  // TODO: Improve handling of `exec` (e.g. check `signal`). Also, why use `shelljs`?
 
   describe('Test: Jest');
   if (
@@ -66,11 +102,16 @@ try {
     throw Error(exitCode);
   }
 
+  describe('Test: TypeScript tests');
+  if (exec(`${YARN_BINARY} run test-typescript-offline`).code) {
+    echo('Failed to run TypeScript tests.');
+    exitCode = 1;
+    throw Error(exitCode);
+  }
+
   exitCode = 0;
 } finally {
   // Do cleanup here
   echo('Finished.');
 }
 exit(exitCode);
-
-/*eslint-enable no-undef */

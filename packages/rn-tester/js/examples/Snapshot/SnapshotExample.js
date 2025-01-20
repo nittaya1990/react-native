@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -10,30 +10,33 @@
 
 'use strict';
 
+const ScreenshotManager = require('../../../NativeModuleExample/NativeScreenshotManager');
+const {RNTesterThemeContext} = require('../../components/RNTesterTheme');
 const React = require('react');
-const {
-  Alert,
-  Image,
-  NativeModules,
-  StyleSheet,
-  Text,
-  View,
-} = require('react-native');
-const ScreenshotManager = NativeModules.ScreenshotManager;
+const {Alert, Image, StyleSheet, Text, View} = require('react-native');
 
 class ScreenshotExample extends React.Component<{...}, $FlowFixMeState> {
-  state = {
+  state: any | {uri: void} = {
     uri: undefined,
   };
 
-  render() {
+  render(): React.Node {
     return (
-      <View>
-        <Text onPress={this.takeScreenshot} style={style.button}>
-          Click to take a screenshot
-        </Text>
-        <Image style={style.image} source={{uri: this.state.uri}} />
-      </View>
+      <RNTesterThemeContext.Consumer>
+        {theme => (
+          <View style={style.container}>
+            <Text
+              onPress={this.takeScreenshot}
+              style={[style.button, {color: theme.LabelColor}]}>
+              Click to take a screenshot
+            </Text>
+            <Image
+              style={[style.image, {backgroundColor: theme.LabelColor}]}
+              source={{uri: this.state.uri}}
+            />
+          </View>
+        )}
+      </RNTesterThemeContext.Consumer>
     );
   }
 
@@ -45,15 +48,16 @@ class ScreenshotExample extends React.Component<{...}, $FlowFixMeState> {
 }
 
 const style = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   button: {
     marginBottom: 10,
     fontWeight: '500',
   },
   image: {
     flex: 1,
-    height: 300,
     resizeMode: 'contain',
-    backgroundColor: 'black',
   },
 });
 
@@ -63,7 +67,7 @@ exports.description = 'API to capture images from the screen.';
 exports.examples = [
   {
     title: 'Take screenshot',
-    render(): React.Element<any> {
+    render(): React.MixedElement {
       return <ScreenshotExample />;
     },
   },

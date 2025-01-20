@@ -1,12 +1,12 @@
 #!/bin/bash
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
 # This script assumes yarn is already installed.
 
-THIS_DIR=$(cd -P "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")" && pwd)
+THIS_DIR=$(cd -P "$(dirname "$(realpath "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")" && pwd)
 
 set -e
 set -u
@@ -22,6 +22,21 @@ else
   YARN_OR_NPM=$(command -v npm)
 fi
 YARN_BINARY="${YARN_BINARY:-$YARN_OR_NPM}"
+
+# mv command to use when copying files into the working directory
+EDEN_SAFE_MV="mv"
+
+if [ -x "$(command -v eden)" ]; then
+  pushd "$THIS_DIR"
+
+  # Detect if we are in an EdenFS checkout with `eden info` (we ignore the output as it creates noise on CI/IDE logs)
+  # Also be sure to use /bin/cp in case users have GNU coreutils installed which is incompatible with -X
+  if [[ "$OSTYPE" == "darwin"* ]] && eden info 2>/dev/null; then
+    EDEN_SAFE_MV="/bin/cp -R -X"
+  fi
+
+  popd >/dev/null
+fi
 
 if [[ ${FBSOURCE_ENV:-0} -eq 1 ]]; then
   # Custom FB-specific setup
@@ -46,7 +61,7 @@ else
   if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ]; then
     tar cf - --exclude='*.lock' "$CODEGEN_DIR" | (cd "$TMP_DIR" && tar xvf - );
   else
-    cp -R "$CODEGEN_DIR/." "$TMP_DIR";
+    /bin/cp -R "$CODEGEN_DIR/." "$TMP_DIR";
   fi
 
   pushd "$TMP_DIR" >/dev/null
@@ -56,6 +71,7 @@ else
 
   popd >/dev/null
 
-  mv "$TMP_DIR/lib" "$TMP_DIR/node_modules" "$CODEGEN_DIR"
+  $EDEN_SAFE_MV "$TMP_DIR/lib" "$CODEGEN_DIR"
+  $EDEN_SAFE_MV "$TMP_DIR/node_modules" "$CODEGEN_DIR"
   rm -rf "$TMP_DIR"
 fi

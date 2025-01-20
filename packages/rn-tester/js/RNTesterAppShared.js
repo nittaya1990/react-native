@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Facebook, Inc. and its affiliates.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
@@ -8,43 +8,63 @@
  * @flow
  */
 
-import {
-  BackHandler,
-  StyleSheet,
-  useColorScheme,
-  View,
-  LogBox,
-} from 'react-native';
-import * as React from 'react';
+import type {RNTesterModuleInfo, ScreenTypes} from './types/RNTesterTypes';
 
 import RNTesterModuleContainer from './components/RNTesterModuleContainer';
 import RNTesterModuleList from './components/RNTesterModuleList';
 import RNTesterNavBar, {navBarHeight} from './components/RNTesterNavbar';
-import RNTesterList from './utils/RNTesterList';
-import {
-  Screens,
-  initialState,
-  getExamplesListWithBookmarksAndRecentlyUsed,
-  getInitialStateFromAsyncStorage,
-} from './utils/testerStateUtils';
-import {useAsyncStorageReducer} from './utils/useAsyncStorageReducer';
-import {RNTesterReducer, RNTesterActionsType} from './utils/RNTesterReducer';
 import {RNTesterThemeContext, themes} from './components/RNTesterTheme';
 import RNTTitleBar from './components/RNTTitleBar';
-import {RNTesterEmptyBookmarksState} from './components/RNTesterEmptyBookmarksState';
+import {title as PlaygroundTitle} from './examples/Playground/PlaygroundExample';
+import RNTesterList from './utils/RNTesterList';
+import {
+  RNTesterNavigationActionsType,
+  RNTesterNavigationReducer,
+} from './utils/RNTesterNavigationReducer';
+import {
+  Screens,
+  getExamplesListWithRecentlyUsed,
+  initialNavigationState,
+} from './utils/testerStateUtils';
+import * as React from 'react';
+import {
+  BackHandler,
+  Button,
+  Linking,
+  Platform,
+  StyleSheet,
+  View,
+  useColorScheme,
+} from 'react-native';
+import * as NativeComponentRegistry from 'react-native/Libraries/NativeComponent/NativeComponentRegistry';
 
-const APP_STATE_KEY = 'RNTesterAppState.v3';
+// In Bridgeless mode, in dev, enable static view config validator
+if (global.RN$Bridgeless === true && __DEV__) {
+  NativeComponentRegistry.setRuntimeConfigProvider(() => {
+    return {
+      native: false,
+      verify: true,
+    };
+  });
+}
 
-// RNTester App currently uses AsyncStorage from react-native for storing navigation state
-// and bookmark items.
-// TODO: Vendor AsyncStorage or create our own.
-LogBox.ignoreLogs([/AsyncStorage has been extracted from react-native/]);
+// RNTester App currently uses in memory storage for storing navigation state
 
-const RNTesterApp = (): React.Node => {
-  const [state, dispatch] = useAsyncStorageReducer(
-    RNTesterReducer,
-    initialState,
-    APP_STATE_KEY,
+type BackButton = ({onBack: () => void}) => React.Node;
+
+const RNTesterApp = ({
+  testList,
+  customBackButton,
+}: {
+  testList?: {
+    components?: Array<RNTesterModuleInfo>,
+    apis?: Array<RNTesterModuleInfo>,
+  },
+  customBackButton?: BackButton,
+}): React.Node => {
+  const [state, dispatch] = React.useReducer(
+    RNTesterNavigationReducer,
+    initialNavigationState,
   );
   const colorScheme = useColorScheme();
 
@@ -53,30 +73,17 @@ const RNTesterApp = (): React.Node => {
     activeModuleTitle,
     activeModuleExampleKey,
     screen,
-    bookmarks,
     recentlyUsed,
   } = state;
 
-  React.useEffect(() => {
-    getInitialStateFromAsyncStorage(APP_STATE_KEY).then(
-      initialStateFromStorage => {
-        dispatch({
-          type: RNTesterActionsType.INIT_FROM_STORAGE,
-          data: initialStateFromStorage,
-        });
-      },
-    );
-  }, [dispatch]);
-
   const examplesList = React.useMemo(
-    () =>
-      getExamplesListWithBookmarksAndRecentlyUsed({bookmarks, recentlyUsed}),
-    [bookmarks, recentlyUsed],
+    () => getExamplesListWithRecentlyUsed({recentlyUsed, testList}),
+    [recentlyUsed, testList],
   );
 
   const handleBackPress = React.useCallback(() => {
     if (activeModuleKey != null) {
-      dispatch({type: RNTesterActionsType.BACK_BUTTON_PRESS});
+      dispatch({type: RNTesterNavigationActionsType.BACK_BUTTON_PRESS});
     }
   }, [dispatch, activeModuleKey]);
 
@@ -90,20 +97,17 @@ const RNTesterApp = (): React.Node => {
       return false;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', handleHardwareBackPress);
-
-    return () => {
-      BackHandler.removeEventListener(
-        'hardwareBackPress',
-        handleHardwareBackPress,
-      );
-    };
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleHardwareBackPress,
+    );
+    return () => subscription.remove();
   }, [activeModuleKey, handleBackPress]);
 
   const handleModuleCardPress = React.useCallback(
-    ({exampleType, key, title}) => {
+    ({exampleType, key, title}: any) => {
       dispatch({
-        type: RNTesterActionsType.MODULE_CARD_PRESS,
+        type: RNTesterNavigationActionsType.MODULE_CARD_PRESS,
         data: {exampleType, key, title},
       });
     },
@@ -111,34 +115,123 @@ const RNTesterApp = (): React.Node => {
   );
 
   const handleModuleExampleCardPress = React.useCallback(
-    exampleName => {
+    (exampleName: string) => {
       dispatch({
-        type: RNTesterActionsType.EXAMPLE_CARD_PRESS,
+        type: RNTesterNavigationActionsType.EXAMPLE_CARD_PRESS,
         data: {key: exampleName},
       });
     },
     [dispatch],
   );
 
-  const toggleBookmark = React.useCallback(
-    ({exampleType, key}) => {
-      dispatch({
-        type: RNTesterActionsType.BOOKMARK_PRESS,
-        data: {exampleType, key},
-      });
+  const handleNavBarPress = React.useCallback(
+    (args: {screen: ScreenTypes}) => {
+      if (args.screen === 'playgrounds') {
+        dispatch({
+          type: RNTesterNavigationActionsType.NAVBAR_OPEN_MODULE_PRESS,
+          data: {
+            key: 'PlaygroundExample',
+            title: PlaygroundTitle,
+            screen: args.screen,
+          },
+        });
+      } else {
+        dispatch({
+          type: RNTesterNavigationActionsType.NAVBAR_PRESS,
+          data: {screen: args.screen},
+        });
+      }
     },
     [dispatch],
   );
 
-  const handleNavBarPress = React.useCallback(
-    args => {
+  // Setup Linking event subscription
+  const handleOpenUrlRequest = React.useCallback(
+    ({url}: {url: string, ...}) => {
+      // Supported URL pattern(s):
+      // *  rntester://example/<moduleKey>
+      // *  rntester://example/<moduleKey>/<exampleKey>
+      const match =
+        /^rntester:\/\/example\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?$/.exec(
+          url,
+        );
+      if (!match) {
+        console.warn(
+          `handleOpenUrlRequest: Received unsupported URL: '${url}'`,
+        );
+        return;
+      }
+
+      const rawModuleKey = match[1];
+      const exampleKey = match[2];
+
+      // For tooling compatibility, allow all these variants for each module key:
+      const validModuleKeys = [
+        rawModuleKey,
+        `${rawModuleKey}Index`,
+        `${rawModuleKey}Example`,
+        // $FlowFixMe[invalid-computed-prop]
+      ].filter(k => RNTesterList.Modules[k] != null);
+      if (validModuleKeys.length !== 1) {
+        if (validModuleKeys.length === 0) {
+          console.error(
+            `handleOpenUrlRequest: Unable to find requested module with key: '${rawModuleKey}'`,
+          );
+        } else {
+          console.error(
+            `handleOpenUrlRequest: Found multiple matching module with key: '${rawModuleKey}', unable to resolve`,
+          );
+        }
+        return;
+      }
+
+      const resolvedModuleKey = validModuleKeys[0];
+      // $FlowFixMe[invalid-computed-prop]
+      const exampleModule = RNTesterList.Modules[resolvedModuleKey];
+
+      if (exampleKey != null) {
+        const validExampleKeys = exampleModule.examples.filter(
+          e => e.name === exampleKey,
+        );
+        if (validExampleKeys.length !== 1) {
+          if (validExampleKeys.length === 0) {
+            console.error(
+              `handleOpenUrlRequest: Unable to find requested example with key: '${exampleKey}' within module: '${resolvedModuleKey}'`,
+            );
+          } else {
+            console.error(
+              `handleOpenUrlRequest: Found multiple matching example with key: '${exampleKey}' within module: '${resolvedModuleKey}', unable to resolve`,
+            );
+          }
+          return;
+        }
+      }
+
+      console.log(
+        `handleOpenUrlRequest: Opening module: '${resolvedModuleKey}', example: '${
+          exampleKey || 'null'
+        }'`,
+      );
+
       dispatch({
-        type: RNTesterActionsType.NAVBAR_PRESS,
-        data: {screen: args.screen},
+        type: RNTesterNavigationActionsType.EXAMPLE_OPEN_URL_REQUEST,
+        data: {
+          key: resolvedModuleKey,
+          title: exampleModule.title || resolvedModuleKey,
+          exampleKey,
+        },
       });
     },
     [dispatch],
   );
+  React.useEffect(() => {
+    // Initial deeplink
+    Linking.getInitialURL()
+      .then(url => url != null && handleOpenUrlRequest({url: url}))
+      .catch(_ => {});
+    const subscription = Linking.addEventListener('url', handleOpenUrlRequest);
+    return () => subscription.remove();
+  }, [handleOpenUrlRequest]);
 
   const theme = colorScheme === 'dark' ? themes.dark : themes.light;
 
@@ -147,6 +240,7 @@ const RNTesterApp = (): React.Node => {
   }
 
   const activeModule =
+    // $FlowFixMe[invalid-computed-prop]
     activeModuleKey != null ? RNTesterList.Modules[activeModuleKey] : null;
   const activeModuleExample =
     activeModuleExampleKey != null
@@ -156,26 +250,30 @@ const RNTesterApp = (): React.Node => {
     activeModuleTitle != null
       ? activeModuleTitle
       : screen === Screens.COMPONENTS
-      ? 'Components'
-      : screen === Screens.APIS
-      ? 'APIs'
-      : 'Bookmarks';
+        ? 'Components'
+        : 'APIs';
+
+  const BackButtonComponent: ?BackButton = customBackButton
+    ? customBackButton
+    : Platform.OS === 'ios'
+      ? ({onBack}) => (
+          <Button title="Back" onPress={onBack} color={theme.LinkColor} />
+        )
+      : null;
 
   const activeExampleList =
-    screen === Screens.COMPONENTS
-      ? examplesList.components
-      : screen === Screens.APIS
-      ? examplesList.apis
-      : examplesList.bookmarks;
+    screen === Screens.COMPONENTS ? examplesList.components : examplesList.apis;
 
   return (
     <RNTesterThemeContext.Provider value={theme}>
       <RNTTitleBar
         title={title}
         theme={theme}
-        onBack={activeModule ? handleBackPress : null}
-        documentationURL={activeModule?.documentationURL}
-      />
+        documentationURL={activeModule?.documentationURL}>
+        {activeModule && BackButtonComponent ? (
+          <BackButtonComponent onBack={handleBackPress} />
+        ) : undefined}
+      </RNTTitleBar>
       <View
         style={StyleSheet.compose(styles.container, {
           backgroundColor: theme.GroupedBackgroundColor,
@@ -186,13 +284,9 @@ const RNTesterApp = (): React.Node => {
             example={activeModuleExample}
             onExampleCardPress={handleModuleExampleCardPress}
           />
-        ) : screen === Screens.BOOKMARKS &&
-          examplesList.bookmarks.length === 0 ? (
-          <RNTesterEmptyBookmarksState />
         ) : (
           <RNTesterModuleList
             sections={activeExampleList}
-            toggleBookmark={toggleBookmark}
             handleModuleCardPress={handleModuleCardPress}
           />
         )}
